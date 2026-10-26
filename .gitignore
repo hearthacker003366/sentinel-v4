@@ -1,0 +1,10 @@
+# Sentinel V4 — first-commit guardrails (prepared Oct 26, 2026, before kickoff)
+# Never commit the virtualenv, caches, temp files, or the pre-existing
+# Oct 22 Laya training artefacts. See v4-repo-separation-decision-oct-26-2026.md.
+.venv/
+__pycache__/
+*.pyc
+.tmp/
+training/
+.env
+*.log
