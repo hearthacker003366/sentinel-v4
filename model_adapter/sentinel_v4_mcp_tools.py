@@ -22,8 +22,7 @@ Safety invariants baked into every schema:
   2. Containment is REVERSIBLE and EXPIRING — a proposal carries ttl_seconds
      and auto-rolls back unless the human confirms.
   3. Red-team tools refuse any target outside SENTINEL_LAB_CIDRS (RFC1918
-     defaults). Lab-only, always — this is your CERT-In CIAD-2026-0049
-     "lab-only, dry-run default" safety story for the judges.
+     defaults). Lab-only, always — this is your "lab-only, dry-run default" safe simulation architecture for the judges.
   4. Every event carries a trace_id (see TRACE_ID format) so the dashboard,
      replay harness and audit log can join red actions to blue responses.
 
@@ -49,7 +48,7 @@ TOOL_REGISTRY_VERSION = "0.1.0-draft"  # bump on any schema change; replay harne
 # ---------------------------------------------------------------------------
 # Safety: lab scope. Red-team tools MUST refuse anything outside these CIDRs.
 # Narrowed strictly to simulated lab networks (VirtualBox host-only + isolated range).
-# Hard-coded per frozen architecture rules (CERT-In CIAD-2026-0049 compliance).
+# Hard-coded per frozen lab network simulation boundaries.
 # ---------------------------------------------------------------------------
 LAB_CIDRS = [
     ipaddress.ip_network("192.168.56.0/24"),
@@ -62,20 +61,23 @@ TRACE_ID_RE = re.compile(r"^st4-\d{8}-[0-9a-f]{6}$")
 
 
 def in_lab_scope(target: str) -> bool:
-    """True only if the target IP/hostname resolves inside the lab CIDRs.
+    """True only if the target is a literal IP address inside the lab CIDRs (§1.4).
 
     Call this inside EVERY red.* implementation before touching the network.
-    Hostnames must be resolved first — never trust a label.
+    Hostnames are denied outright to prevent DNS rebinding attacks.
     """
     try:
         ip = ipaddress.ip_address(target)
-    except ValueError:
-        try:
-            resolved_ip = socket.gethostbyname(target)
-            ip = ipaddress.ip_address(resolved_ip)
-        except Exception:
-            return False  # hostnames: resolve, then re-check; unresolved = deny
+    except (ValueError, TypeError):
+        return False
     return any(ip in net for net in LAB_CIDRS)
+
+
+def validate_trace_id(trace_id: str) -> bool:
+    r"""Validate that trace_id conforms to ^st4-\d{8}-[0-9a-f]{6}$ format (§1.4)."""
+    if not isinstance(trace_id, str):
+        return False
+    return bool(TRACE_ID_RE.match(trace_id))
 
 
 # ---------------------------------------------------------------------------
