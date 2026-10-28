@@ -20,8 +20,11 @@ Meta Model API wiring (Day 1):
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
+import socket
+import time
 import uuid
 import urllib.error
 import urllib.parse
@@ -42,6 +45,7 @@ DEFAULT_API_URL = "https://api.meta.ai/v1/chat/completions"
 ALLOWED_API_HOSTS = {"api.meta.ai", "127.0.0.1", "localhost"}
 
 TOOL_NAME_RE = re.compile(r"^[a-zA-Z0-9_.-]+$")
+TOOL_SCHEMAS = {t["name"]: t.get("inputSchema", {}) for t in TOOLS}
 
 SYSTEM_PROMPT = """\
 You are Sentinel V4, an AI SOC copilot (System-2 reasoning over Laya triage).
@@ -158,7 +162,6 @@ def validate_containment_proposal(obj: Any) -> ContainmentProposal:
             validation_error=f"Invalid containment action {raw_action!r}",
         )
 
-    # Invariant: AI proposals are ALWAYS dry_run=True and require explicit human bind_approval
     return ContainmentProposal(
         proposal_id=pid,
         action=action_enum,
@@ -205,6 +208,20 @@ def validate_tools(tools: list[dict[str, Any]]) -> None:
             raise ValueError(f"invalid tool name {name!r}: must match ^[a-zA-Z0-9_.-]+$ with at most one dot")
 
 
+def validate_tool_arguments(tool_name: str, args: Any) -> tuple[bool, str]:
+    """Validate model-provided arguments against tool inputSchema (§1.7)."""
+    schema = TOOL_SCHEMAS.get(tool_name)
+    if not schema:
+        return False, f"Unknown tool {tool_name!r}"
+    if not isinstance(args, dict):
+        return False, f"Tool arguments must be a dictionary, got {type(args).__name__}"
+    required = schema.get("required", [])
+    for req in required:
+        if req not in args:
+            return False, f"Missing required property {req!r} for tool {tool_name}"
+    return True, ""
+
+
 _SSE_PING_TOKENS = {"ping", "[ping]", ":ping", ": ping"}
 
 
@@ -230,11 +247,10 @@ def parse_sse_events(raw: str) -> list[str]:
     for line in raw.splitlines():
         s = line.strip()
         if not s:
-            # Blank line represents event boundary in SSE spec
             flush_current()
             continue
         if s.startswith(":"):
-            continue  # comment / keepalive ping
+            continue
         low = s.lower()
         if low in _SSE_PING_TOKENS or low in {"event: ping", "event:ping"}:
             continue
@@ -246,7 +262,6 @@ def parse_sse_events(raw: str) -> list[str]:
                 continue
             current_data_lines.append(val)
         elif current_data_lines:
-            # Multi-line continuation
             current_data_lines.append(s)
 
     flush_current()
@@ -262,7 +277,7 @@ def _extract_response(payloads: list[str], raw_text: str) -> tuple[str, list[dic
         try:
             obj = json.loads(p)
         except (json.JSONDecodeError, ValueError):
-            texts.append(p)  # plain-text fragment — keep, don't crash
+            texts.append(p)
             continue
         if not isinstance(obj, dict):
             continue
@@ -282,30 +297,45 @@ def _extract_response(payloads: list[str], raw_text: str) -> tuple[str, list[dic
                                 fn = tc.get("function", {})
                                 name = fn.get("name", "") if isinstance(fn, dict) else ""
                                 if name and is_valid_tool_name(name):
-                                    tool_calls.append(tc)
-        # Non-streaming error payloads surface as text for the raw record.
+                                    raw_args = fn.get("arguments", "{}")
+                                    try:
+                                        parsed_args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
+                                    except (json.JSONDecodeError, ValueError):
+                                        parsed_args = {}
+                                    valid, err = validate_tool_arguments(name, parsed_args)
+                                    tc_clean = dict(tc)
+                                    tc_clean["arguments_validated"] = valid
+                                    if not valid:
+                                        tc_clean["validation_error"] = err
+                                    tool_calls.append(tc_clean)
         if not texts and obj.get("error"):
             texts.append(json.dumps(obj["error"]))
     return "".join(texts), tool_calls
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:
-    """Pull the first JSON object out of model text (fences tolerated)."""
+    """Pull the first valid JSON object out of model text without greedy slicing (§1.7)."""
     if not text:
         return {}
     t = text.strip()
     fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", t, re.DOTALL)
     if fence:
-        t = fence.group(1)
-    else:
-        start, end = t.find("{"), t.rfind("}")
-        if start != -1 and end > start:
-            t = t[start : end + 1]
+        try:
+            obj = json.loads(fence.group(1))
+            return obj if isinstance(obj, dict) else {}
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    start = t.find("{")
+    if start == -1:
+        return {}
+
     try:
-        obj = json.loads(t)
+        decoder = json.JSONDecoder()
+        obj, _ = decoder.raw_decode(t[start:])
+        return obj if isinstance(obj, dict) else {}
     except (json.JSONDecodeError, ValueError):
         return {}
-    return obj if isinstance(obj, dict) else {}
 
 
 def _clamp_confidence(value: Any) -> float:
@@ -313,7 +343,6 @@ def _clamp_confidence(value: Any) -> float:
         f = float(value)
     except (TypeError, ValueError):
         return 0.0
-    import math
     if not math.isfinite(f):
         return 0.0
     return max(0.0, min(1.0, f))
@@ -401,7 +430,6 @@ class MuseSparkClient:
         validate_tools(self.tools)
         self.tool_choice = TOOL_CHOICE
 
-        # Security (§1.3): Validate API URL against scheme and host allowlist
         raw_url = os.environ.get("META_MODEL_API_URL", DEFAULT_API_URL)
         self.api_url = validate_api_url(raw_url)
 
@@ -423,8 +451,6 @@ class MuseSparkClient:
             ),
         }.get(task, "Reason about this security case and return the structured JSON verdict.")
 
-        # Security (§1.1): Untrusted event/telemetry/graph data quarantined structurally inside JSON strings
-        # and tag breakout sequences '</' are neutralized to '<\\/'.
         quarantined_event = quarantine_untrusted_text(ctx.event_summary)
         quarantined_graph = quarantine_untrusted_text(" -> ".join(ctx.graph_path) if ctx.graph_path else "(no graph path)")
         quarantined_telemetry = quarantine_untrusted_text(ctx.telemetry)
@@ -461,12 +487,12 @@ class MuseSparkClient:
             "model": self.model,
             "messages": self._build_messages(task, ctx),
             "tools": functions,
-            "tool_choice": self.tool_choice,  # "auto" only — never force a tool
+            "tool_choice": self.tool_choice,
             "stream": True,
         }
 
-    # -- transport -------------------------------------------------------
-    def _call_api(self, payload: dict[str, Any]) -> str:
+    # -- transport with bounded retries (§1.7) ---------------------------
+    def _call_api(self, payload: dict[str, Any], max_retries: int = 3) -> str:
         body = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             self.api_url,
@@ -477,14 +503,22 @@ class MuseSparkClient:
                 "Authorization": f"Bearer {self.api_key}",
             },
         )
-        try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                return resp.read().decode("utf-8", errors="replace")
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode("utf-8", errors="replace")[:500]
-            raise RuntimeError(f"Meta Model API HTTP {e.code}: {detail}") from e
-        except urllib.error.URLError as e:
-            raise RuntimeError(f"Meta Model API unreachable at {self.api_url}: {e.reason}") from e
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(req, timeout=45) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except urllib.error.HTTPError as e:
+                if 400 <= e.code < 500 and e.code != 429:
+                    detail = e.read().decode("utf-8", errors="replace")[:500]
+                    raise RuntimeError(f"Meta Model API HTTP {e.code}: {detail}") from e
+                last_error = e
+                time.sleep(0.5 * (2 ** attempt))
+            except (urllib.error.URLError, TimeoutError, socket.timeout) as e:
+                last_error = e
+                time.sleep(0.5 * (2 ** attempt))
+
+        raise RuntimeError(f"Meta Model API failed after {max_retries} retries: {last_error}")
 
     # -- parse -----------------------------------------------------------
     def _parse_result(self, response_text: str, tool_calls: list[dict[str, Any]]) -> ReasoningResult:
@@ -492,7 +526,6 @@ class MuseSparkClient:
         explanation = str(data.get("explanation", "") or "").strip()
         containment_raw = data.get("containment_recommendation", "")
 
-        # Security (§1.2): Validate containment proposal structurally
         proposal: ContainmentProposal | None = None
         if isinstance(containment_raw, dict):
             proposal = validate_containment_proposal(containment_raw)
@@ -504,15 +537,12 @@ class MuseSparkClient:
                 f"{containment_raw.get('reason', '')}".strip()
             )
         else:
-            # Model emitted prose or string; non-executable proposal generated
             proposal = validate_containment_proposal(None)
             containment_text = str(containment_raw or "")
 
         containment = _enforce_containment_safety(containment_text)
         remediation = str(data.get("remediation_draft", "") or "").strip()
 
-        # Fallback: if the model replied in prose, keep it as the explanation
-        # rather than returning an empty verdict.
         if not explanation and response_text.strip() and not data:
             explanation = response_text.strip()[:4000]
 
