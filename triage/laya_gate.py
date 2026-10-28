@@ -23,6 +23,7 @@ TODO (Phase 1, days 4-5):
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -62,13 +63,32 @@ class LayaGate:
         raise NotImplementedError("Laya HTTP wiring lands on build days 4-5")
 
     def _wrap(self, kind: str, resp: dict) -> Decision:
-        confidence = float(resp.get("confidence", 0.0))
+        try:
+            raw_conf = float(resp.get("confidence", 0.0))
+        except (TypeError, ValueError):
+            raw_conf = 0.0
+
+        # Security (§1.6): Non-finite confidence (inf, -inf, nan, "Infinity") MUST escalate, never auto-act
+        if not math.isfinite(raw_conf):
+            confidence = 0.0
+            escalate = True
+        else:
+            confidence = max(0.0, min(1.0, raw_conf))
+            escalate = confidence < self.thresholds.auto_act
+
+        try:
+            val = float(resp.get("score", 0.0))
+            if not math.isfinite(val):
+                val = 0.0
+        except (TypeError, ValueError):
+            val = 0.0
+
         return Decision(
             kind=kind,
             label=str(resp.get("choice", resp.get("label", ""))),
-            value=float(resp.get("score", 0.0)),
+            value=val,
             confidence=confidence,
-            escalate=confidence < self.thresholds.auto_act,
+            escalate=escalate,
         )
 
     # -- typed primitives (mirror the /v1/systemone request shape) -------
