@@ -6,27 +6,45 @@ Purple-team demo: LLM red-team bots attack a **simulated lab network** while an 
 
 ## 🏗️ Architecture
 
+```mermaid
+flowchart TD
+    subgraph LAB["Simulated lab network — RFC1918 only"]
+        BOTS["redteam/ bots\nMuse Spark strategy, Laya tactics\nlab scope hard-coded"]
+        NET["Lab hosts\n192.168.56.0/24, 10.10.10.0/24"]
+        BOTS -->|"attack (probes)"| NET
+    end
+    NET -->|"telemetry"| GATE["triage/ — Laya, System-1 gate\nscores every event locally"]
+    GATE -->|"confidence > 0.85"| ORCH["orchestrator/ — Chief Sentinel\ndry-run containment by default"]
+    GATE -->|"confidence below 0.85\nuncertain / high-risk"| SPARK["model_adapter/ — Muse Spark, System-2\nthreat-path explanation, containment\nrecommendation, remediation drafting"]
+    SPARK -->|"proposed actions"| ORCH
+    ORCH -->|"approval request"| HUMAN["Human analyst\nvia Telegram HITL"]
+    HUMAN -->|"approve / reject"| ORCH
+    ORCH -->|"live state"| DASH["dashboard/ — planned\nDay 8, Stitch-built UI"]
 ```
-Simulated lab network (RFC1918 only: 192.168.56.0/24, 10.10.10.0/24)
-        │ telemetry                     │ probes
-        ▼                               ▼
-  triage/  (Laya, System-1)       redteam/  (bots: Muse Spark strategy,
-  scores every event in ~ms;       Laya tactics; lab scope is hard-coded)
-  auto-act > 0.85 confidence,
-  escalate below
-        │ uncertain / high-risk
-        ▼
-  model_adapter/  (Muse Spark, System-2, via Meta Model API)
-  threat-path explanation, containment recommendation, remediation drafting.
-  Reached ONLY through the adapter — prompts stay model-agnostic and the
-  MCP tool interface from Sentinel V3 stays unchanged.
-        │ proposed actions
-        ▼
-  orchestrator/  (Chief Sentinel)
-  dry-run containment by default, HITL approval via Telegram
-        │
-        ▼
-  dashboard/  (Day 8: Stitch-built UI)
+
+How an event flows:
+
+1. Red-team bots attack the simulated lab (RFC1918 addresses only; scope is hard-coded).
+2. Lab telemetry reaches the Laya gate, which scores every event.
+3. Confidence above 0.85 → **fast path**: the orchestrator proposes dry-run reversible containment.
+4. Confidence below 0.85 → **slow path**: Muse Spark reasons about the threat path and recommends containment.
+5. Every proposed action goes to the human analyst via Telegram HITL for approval or rejection.
+6. The dashboard shows live state (planned — Day 8).
+
+Muse Spark is reached ONLY through `model_adapter/` — prompts stay model-agnostic, and the MCP tool interface from Sentinel V3 stays unchanged.
+
+## 🗂️ Project structure
+
+```
+triage/          Laya System-1 gate
+model_adapter/   Muse Spark System-2 client
+orchestrator/    Chief Sentinel — dry-run containment + Telegram HITL
+redteam/         LLM red-team bots (simulated lab only)
+scripts/         replay harness (Gate 1)
+tests/           29 tests
+docs/            Laya training proof screenshots (assets/)
+dashboard_notes/ dashboard notes
+requirements.txt pinned dependencies
 ```
 
 ## ✅ What is built and verified
@@ -71,4 +89,11 @@ python scripts/replay_scenarios.py   # 3/3 scenarios passed
 - **Track:** Build for Your World. **Tooling:** Muse Spark series via the Meta Model API; open-weight bonus path via Muse Glimmer / Muse Spark Open on local hardware.
 
 ## ⚠️ Rules note
+
 New work only: this repo was created Oct 26, 2026 and contains only hackathon-week work. Pre-existing work (Sentinel V3) is named here and in the video, lives in its own repository, and is not judged. The demo runs standalone with mock/demo data available for judges.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file.
+
+Copyright (c) 2026 hearthacker003366
