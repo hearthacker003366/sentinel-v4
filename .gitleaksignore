@@ -1,0 +1,3 @@
+# .gitleaksignore — false positives get documented here as they arise.
+# One fingerprint per line, each with a comment explaining why it is safe.
+# Do not add real secrets here; this file only suppresses known false positives.
