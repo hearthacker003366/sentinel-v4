@@ -1,0 +1,17 @@
+{
+  "model": "C:\\Users\\B.prabhudas\\Desktop\\sentinel-v4\\training\\laya-tuned-v1",
+  "tag": "tuned",
+  "n_test": 101,
+  "verdict_accuracy": 0.8812,
+  "mean_p_winner": 0.888,
+  "mean_p_gold_verdict": 0.8067,
+  "auto_act_rate": 0.8317,
+  "auto_act_accuracy": 0.9167,
+  "escalate_rate": 0.1683,
+  "is_attack_accuracy": 0.9109,
+  "mean_p_attack_when_attack": 0.9572,
+  "mean_p_attack_when_not": 0.1867,
+  "severity_mae": 0.1262,
+  "latency_s_mean": 0.045,
+  "latency_s_median": 0.042
+}

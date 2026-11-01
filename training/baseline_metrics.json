@@ -1,0 +1,17 @@
+{
+  "model": "C:\\Users\\B.prabhudas\\Desktop\\sentinel-v4\\.cache\\hub\\models--convaiinnovations--laya\\snapshots\\7b928d828b7b0e022f929d9bd2e44165aa270148",
+  "tag": "baseline",
+  "n_test": 101,
+  "verdict_accuracy": 0.6931,
+  "mean_p_winner": 0.6763,
+  "mean_p_gold_verdict": 0.5682,
+  "auto_act_rate": 0.3168,
+  "auto_act_accuracy": 0.9375,
+  "escalate_rate": 0.6832,
+  "is_attack_accuracy": 0.8911,
+  "mean_p_attack_when_attack": 0.857,
+  "mean_p_attack_when_not": 0.1528,
+  "severity_mae": 0.2388,
+  "latency_s_mean": 0.049,
+  "latency_s_median": 0.045
+}

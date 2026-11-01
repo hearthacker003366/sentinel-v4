@@ -5,7 +5,16 @@
 __pycache__/
 *.pyc
 .tmp/
-training/
 .env
 *.log
 .cache/
+
+# Training directory: ignore all contents by default to exclude pre-existing artefacts & 800MB weights
+training/*
+# Allow ONLY the hackathon-week evaluation files
+!training/evaluate.py
+!training/data_test.jsonl
+!training/baseline_metrics.json
+!training/baseline_predictions.json
+!training/tuned_metrics.json
+!training/tuned_predictions.json

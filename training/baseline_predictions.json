@@ -1,0 +1,1618 @@
+[
+ {
+  "event": "nginx: 732 half-open connections from 45.155.204.28 held for over 120s; [ALERT] DDOS_SLOWLORIS: connection exhaustion attack detected on port 80",
+  "family": "slowloris_ddos",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.75,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1001,
+   "suspicious": 0.5149,
+   "malicious": 0.385
+  },
+  "p_winner": 0.5149,
+  "p_attack": 0.9594,
+  "severity_pred": 0.4755
+ },
+ {
+  "event": "SIGMA ALERT [HIGH] Lateral Movement SMB Port 445 Discovery (MITRE T1021.002): WKSTN-09 enumerated SMB on every reachable domain host",
+  "family": "smb_lateral_sweep",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.86,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8638,
+   "suspicious": 0.0707,
+   "malicious": 0.0655
+  },
+  "p_winner": 0.8638,
+  "p_attack": 0.861,
+  "severity_pred": 0.4655
+ },
+ {
+  "event": "uptime probe: BACKUP-VAULT-01 responded to ICMP and SNMPv3 poll from the monitoring server; all interfaces nominal",
+  "family": "health_checks",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.06,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9271,
+   "suspicious": 0.0388,
+   "malicious": 0.0341
+  },
+  "p_winner": 0.9271,
+  "p_attack": 0.0259,
+  "severity_pred": 0.3092
+ },
+ {
+  "event": "web log: repeated 404s from 62.204.41.233 for /.git/HEAD, /server-status, /wp-admin/ spread across 45 minutes",
+  "family": "admin_path_probe",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.48,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1223,
+   "suspicious": 0.7079,
+   "malicious": 0.1698
+  },
+  "p_winner": 0.7079,
+  "p_attack": 0.4538,
+  "severity_pred": 0.3919
+ },
+ {
+  "event": "identity log: d.khan completed MFA enrolment refresh (authenticator app) after helpdesk verification call",
+  "family": "password_change",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.06,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8635,
+   "suspicious": 0.0646,
+   "malicious": 0.0719
+  },
+  "p_winner": 0.8635,
+  "p_attack": 0.054,
+  "severity_pred": 0.2695
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24167 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.07,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8629,
+   "suspicious": 0.0626,
+   "malicious": 0.0745
+  },
+  "p_winner": 0.8629,
+  "p_attack": 0.09,
+  "severity_pred": 0.3096
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24195 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.05,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8605,
+   "suspicious": 0.0633,
+   "malicious": 0.0763
+  },
+  "p_winner": 0.8605,
+  "p_attack": 0.0958,
+  "severity_pred": 0.3024
+ },
+ {
+  "event": "Sep 06 15:16:28 edge-fw kernel: [UFW BLOCK] IN=wan0 SRC=198.51.100.48 DST=192.168.1.20 PROTO=TCP SPT=37165 DPT=22 SYN",
+  "family": "ufw_single_block",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.52,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1515,
+   "suspicious": 0.4923,
+   "malicious": 0.3562
+  },
+  "p_winner": 0.4923,
+  "p_attack": 0.7891,
+  "severity_pred": 0.5153
+ },
+ {
+  "event": "[ThreatIntel OFFLINE-HEURISTIC] IP 103.75.190.85 - confidence 60% - recommendation: ROUTE_TO_HONEYPOT (Spamhaus DROP-listed range, documented botnet C2 hosting); outbound connection from WKSTN-04 flagged",
+  "family": "c2_beacon",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.9,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.1285,
+   "suspicious": 0.3676,
+   "malicious": 0.5038
+  },
+  "p_winner": 0.5038,
+  "p_attack": 0.9482,
+  "severity_pred": 0.3871
+ },
+ {
+  "event": "honeypot[http]: single GET / from 198.51.100.149 with an ordinary browser user-agent, then disconnect; no follow-up probes",
+  "family": "honeypot_touch",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.33,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2354,
+   "suspicious": 0.063,
+   "malicious": 0.7016
+  },
+  "p_winner": 0.7016,
+  "p_attack": 0.9894,
+  "severity_pred": 0.2286
+ },
+ {
+  "event": "uptime probe: WKSTN-12 responded to ICMP and SNMPv3 poll from the monitoring server; all interfaces nominal",
+  "family": "health_checks",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.01,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9161,
+   "suspicious": 0.0452,
+   "malicious": 0.0387
+  },
+  "p_winner": 0.9161,
+  "p_attack": 0.0359,
+  "severity_pred": 0.2965
+ },
+ {
+  "event": "nginx access: 198.51.100.222 - - \"GET /news.php?id=5 AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT(VERSION(),FLOOR(RAND()*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)-- HTTP/1.1\" 200 3954 \"-\" \"sqlmap/1.7\"",
+  "family": "sql_injection",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.88,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2382,
+   "suspicious": 0.2081,
+   "malicious": 0.5537
+  },
+  "p_winner": 0.5537,
+  "p_attack": 0.9253,
+  "severity_pred": 0.3872
+ },
+ {
+  "event": "PROCESS_CREATION event on WKSTN-12: process=powershell.exe parent=excel.exe command_line=\"powershell -ep bypass -w hidden -enc SQBFAFgAIAAoAE4AZQB3AC0A...\" user=m.osei",
+  "family": "powershell_office",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.95,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2091,
+   "suspicious": 0.1952,
+   "malicious": 0.5957
+  },
+  "p_winner": 0.5957,
+  "p_attack": 1.0,
+  "severity_pred": 0.706
+ },
+ {
+  "event": "directory audit: account 'temp_admin' added to Remote Desktop Users on DC01-PROD outside the change window",
+  "family": "account_created",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.42,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8639,
+   "suspicious": 0.0829,
+   "malicious": 0.0532
+  },
+  "p_winner": 0.8639,
+  "p_attack": 0.0414,
+  "severity_pred": 0.2525
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24149 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.01,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8625,
+   "suspicious": 0.0634,
+   "malicious": 0.0741
+  },
+  "p_winner": 0.8625,
+  "p_attack": 0.0935,
+  "severity_pred": 0.2997
+ },
+ {
+  "event": "honeypot[http]: single GET / from 198.51.100.181 with an ordinary browser user-agent, then disconnect; no follow-up probes",
+  "family": "honeypot_touch",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.31,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.232,
+   "suspicious": 0.0643,
+   "malicious": 0.7037
+  },
+  "p_winner": 0.7037,
+  "p_attack": 0.9865,
+  "severity_pred": 0.2319
+ },
+ {
+  "event": "THREAT [TRAPPED] HONEYPOT_SSH from 198.51.100.50: credential guessing against fake SSH service, last attempt username=\"ubuntu\" password=\"123456\"",
+  "family": "honeypot_ssh",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.7,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0523,
+   "suspicious": 0.2168,
+   "malicious": 0.7308
+  },
+  "p_winner": 0.7308,
+  "p_attack": 1.0,
+  "severity_pred": 0.6436
+ },
+ {
+  "event": "honeypot[http]: single GET / from 203.0.113.228 with an ordinary browser user-agent, then disconnect; no follow-up probes",
+  "family": "honeypot_touch",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.42,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2208,
+   "suspicious": 0.0666,
+   "malicious": 0.7126
+  },
+  "p_winner": 0.7126,
+  "p_attack": 0.9851,
+  "severity_pred": 0.2066
+ },
+ {
+  "event": "SIGMA ALERT [CRITICAL] Credential Dumping via LSASS Memory Access on WKSTN-04 (MITRE T1003.001): mimikatz.exe read lsass.exe memory",
+  "family": "lsass_dump",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.97,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.1925,
+   "suspicious": 0.2552,
+   "malicious": 0.5523
+  },
+  "p_winner": 0.5523,
+  "p_attack": 1.0,
+  "severity_pred": 0.7891
+ },
+ {
+  "event": "Sysmon[1] Process Create on WKSTN-09: Image: C:\\Program Files\\SentinelLab\\chrome_update_check.exe, CommandLine: \"chrome_update_check.exe\" --service, ParentImage: services.exe, User: SYSTEM",
+  "family": "inventory_baseline",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.07,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.6191,
+   "suspicious": 0.2001,
+   "malicious": 0.1808
+  },
+  "p_winner": 0.6191,
+  "p_attack": 0.5128,
+  "severity_pred": 0.4083
+ },
+ {
+  "event": "[ALERT] PRIVILEGE_ESCALATION: multiple failed 'sudo' root escalation attempts from session of user a.sharma on DC01-PROD",
+  "family": "sudo_priv_esc",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.84,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0924,
+   "suspicious": 0.3576,
+   "malicious": 0.55
+  },
+  "p_winner": 0.55,
+  "p_attack": 0.8834,
+  "severity_pred": 0.5144
+ },
+ {
+  "event": "nginx access: 193.106.191.149 - - \"GET /news.php?id=5 AND SLEEP(5)-- HTTP/1.1\" 500 2456 \"-\" \"sqlmap/1.7\"",
+  "family": "sql_injection",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.84,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.5252,
+   "suspicious": 0.224,
+   "malicious": 0.2508
+  },
+  "p_winner": 0.5252,
+  "p_attack": 0.7924,
+  "severity_pred": 0.3074
+ },
+ {
+  "event": "sshd[1528]: 171 failed password attempts for admin from 62.204.41.171 in 60 seconds; latest: Failed password for admin from 62.204.41.171 port 40875 ssh2",
+  "family": "ssh_brute_force",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.91,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.3791,
+   "suspicious": 0.3166,
+   "malicious": 0.3043
+  },
+  "p_winner": 0.3791,
+  "p_attack": 0.7818,
+  "severity_pred": 0.4825
+ },
+ {
+  "event": "w32time_svc on DC01-PROD: time synchronization successful with internal NTP source 192.168.1.1, offset 0.04s",
+  "family": "net_basics",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.04,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8891,
+   "suspicious": 0.0321,
+   "malicious": 0.0788
+  },
+  "p_winner": 0.8891,
+  "p_attack": 0.0027,
+  "severity_pred": 0.2721
+ },
+ {
+  "event": "wuauserv on WKSTN-09: 12 updates downloaded from the internal WSUS server and staged for the maintenance window",
+  "family": "windows_update",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.09,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8957,
+   "suspicious": 0.0597,
+   "malicious": 0.0446
+  },
+  "p_winner": 0.8957,
+  "p_attack": 0.0386,
+  "severity_pred": 0.3194
+ },
+ {
+  "event": "uptime probe: FILE-SRV responded to ICMP and SNMPv3 poll from the monitoring server; all interfaces nominal",
+  "family": "health_checks",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.01,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9296,
+   "suspicious": 0.0382,
+   "malicious": 0.0321
+  },
+  "p_winner": 0.9296,
+  "p_attack": 0.0003,
+  "severity_pred": 0.3009
+ },
+ {
+  "event": "PROCESS_CREATION on WKSTN-09: double-extension executable invoice.pdf.exe launched from user Temp directory by k.reddy, spawned by WINWORD.EXE",
+  "family": "office_dropper",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.96,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.15,
+   "suspicious": 0.2005,
+   "malicious": 0.6494
+  },
+  "p_winner": 0.6494,
+  "p_attack": 0.9462,
+  "severity_pred": 0.6248
+ },
+ {
+  "event": "identity alert: repeated MFA prompts for s.iyer following one failed password attempt from an external IP; push-bombing pattern, no successful auth yet",
+  "family": "mfa_fatigue",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.61,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.261,
+   "suspicious": 0.5205,
+   "malicious": 0.2185
+  },
+  "p_winner": 0.5205,
+  "p_attack": 0.3515,
+  "severity_pred": 0.3985
+ },
+ {
+  "event": "sshd[7041]: 54 failed password attempts for root from 62.204.41.159 in 60 seconds; latest: Failed password for root from 62.204.41.159 port 53805 ssh2",
+  "family": "ssh_brute_force",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.94,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.2583,
+   "suspicious": 0.3783,
+   "malicious": 0.3635
+  },
+  "p_winner": 0.3783,
+  "p_attack": 0.9004,
+  "severity_pred": 0.6248
+ },
+ {
+  "event": "WIN-EVENT 4624 via VPN: m.osei authenticated from Romania 35 minutes after a Hyderabad logon (impossible-travel pattern, may be a commercial VPN exit)",
+  "family": "vpn_new_country",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.49,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.2768,
+   "suspicious": 0.4104,
+   "malicious": 0.3127
+  },
+  "p_winner": 0.4104,
+  "p_attack": 0.9194,
+  "severity_pred": 0.3383
+ },
+ {
+  "event": "w32time_svc on DC01-PROD: time synchronization successful with internal NTP source 192.168.1.1, offset 0.06s",
+  "family": "net_basics",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.01,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.886,
+   "suspicious": 0.0326,
+   "malicious": 0.0814
+  },
+  "p_winner": 0.886,
+  "p_attack": 0.0041,
+  "severity_pred": 0.2702
+ },
+ {
+  "event": "PROCESS_CREATION event on WKSTN-12: process=powershell.exe parent=excel.exe command_line=\"powershell -ep bypass -w hidden -enc aQBmACAAKABpAG4AdgBvAGsA...\" user=r.verma",
+  "family": "powershell_office",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.97,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.3007,
+   "suspicious": 0.2252,
+   "malicious": 0.474
+  },
+  "p_winner": 0.474,
+  "p_attack": 1.0,
+  "severity_pred": 0.6593
+ },
+ {
+  "event": "[ThreatIntel OFFLINE-HEURISTIC] IP 193.106.191.40 - confidence 60% - recommendation: ROUTE_TO_HONEYPOT (Spamhaus DROP-listed range, documented botnet C2 hosting); outbound connection from BACKUP-VAULT-01 flagged",
+  "family": "c2_beacon",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.87,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.1647,
+   "suspicious": 0.1897,
+   "malicious": 0.6456
+  },
+  "p_winner": 0.6456,
+  "p_attack": 1.0,
+  "severity_pred": 0.4326
+ },
+ {
+  "event": "Sep 01 04:11:09 edge-fw kernel: [UFW BLOCK] IN=wan0 SRC=203.0.113.20 DST=192.168.1.20 PROTO=TCP SPT=33207 DPT=22 SYN",
+  "family": "ufw_single_block",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.5,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1315,
+   "suspicious": 0.5,
+   "malicious": 0.3685
+  },
+  "p_winner": 0.5,
+  "p_attack": 0.7335,
+  "severity_pred": 0.5092
+ },
+ {
+  "event": "netflow: sustained outbound transfer of 220 MB from WKSTN-09 to a cloud storage endpoint during lunch hour; no matching backup or sync job on record",
+  "family": "cloud_upload",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.44,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.4053,
+   "suspicious": 0.4008,
+   "malicious": 0.194
+  },
+  "p_winner": 0.4053,
+  "p_attack": 0.0824,
+  "severity_pred": 0.368
+ },
+ {
+  "event": "THREAT [TRAPPED] HONEYPOT_HTTP from 185.220.101.107: exploit probe \"GET /wp-login.php HTTP/1.1\" against decoy web service",
+  "family": "honeypot_http",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.91,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0339,
+   "suspicious": 0.1014,
+   "malicious": 0.8648
+  },
+  "p_winner": 0.8648,
+  "p_attack": 0.9897,
+  "severity_pred": 0.7827
+ },
+ {
+  "event": "web log: repeated 404s from 198.51.100.3 for /.git/HEAD, /server-status, /wp-admin/ spread across 45 minutes",
+  "family": "admin_path_probe",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.58,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1211,
+   "suspicious": 0.7132,
+   "malicious": 0.1657
+  },
+  "p_winner": 0.7132,
+  "p_attack": 0.4818,
+  "severity_pred": 0.3896
+ },
+ {
+  "event": "nginx: 225 half-open connections from 62.204.41.149 held for over 120s; [ALERT] DDOS_SLOWLORIS: connection exhaustion attack detected on port 80",
+  "family": "slowloris_ddos",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.85,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.0969,
+   "suspicious": 0.5306,
+   "malicious": 0.3724
+  },
+  "p_winner": 0.5306,
+  "p_attack": 0.9535,
+  "severity_pred": 0.5003
+ },
+ {
+  "event": "Sysmon[1] Process Create on FILE-SRV: Image: C:\\Program Files\\SentinelLab\\fileserver_svc.exe, CommandLine: \"fileserver_svc.exe\" --service, ParentImage: services.exe, User: SYSTEM",
+  "family": "inventory_baseline",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.09,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.6726,
+   "suspicious": 0.1751,
+   "malicious": 0.1524
+  },
+  "p_winner": 0.6726,
+  "p_attack": 0.1329,
+  "severity_pred": 0.5081
+ },
+ {
+  "event": "uptime probe: DC01-PROD responded to ICMP and SNMPv3 poll from the monitoring server; all interfaces nominal",
+  "family": "health_checks",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.02,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9254,
+   "suspicious": 0.0381,
+   "malicious": 0.0366
+  },
+  "p_winner": 0.9254,
+  "p_attack": 0.0012,
+  "severity_pred": 0.2801
+ },
+ {
+  "event": "identity alert: repeated MFA prompts for r.verma following one failed password attempt from an external IP; push-bombing pattern, no successful auth yet",
+  "family": "mfa_fatigue",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.57,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.3203,
+   "suspicious": 0.4293,
+   "malicious": 0.2504
+  },
+  "p_winner": 0.4293,
+  "p_attack": 0.4759,
+  "severity_pred": 0.3978
+ },
+ {
+  "event": "Sysmon[1] Process Create on BACKUP-VAULT-01: Image: C:\\Program Files\\SentinelLab\\backup_daemon.exe, CommandLine: \"backup_daemon.exe\" --service, ParentImage: services.exe, User: SYSTEM",
+  "family": "inventory_baseline",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.07,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.7106,
+   "suspicious": 0.1447,
+   "malicious": 0.1447
+  },
+  "p_winner": 0.7106,
+  "p_attack": 0.2665,
+  "severity_pred": 0.4361
+ },
+ {
+  "event": "Sep 20 13:01:24 edge-fw kernel: [UFW BLOCK] IN=wan0 SRC=198.51.100.146 DST=192.168.1.20 PROTO=TCP SPT=56802 DPT=22 SYN",
+  "family": "ufw_single_block",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.5,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1393,
+   "suspicious": 0.4904,
+   "malicious": 0.3703
+  },
+  "p_winner": 0.4904,
+  "p_attack": 0.7991,
+  "severity_pred": 0.5373
+ },
+ {
+  "event": "netflow: sustained outbound transfer of 218 MB from FILE-SRV to a cloud storage endpoint during lunch hour; no matching backup or sync job on record",
+  "family": "cloud_upload",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.58,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.3612,
+   "suspicious": 0.4164,
+   "malicious": 0.2224
+  },
+  "p_winner": 0.4164,
+  "p_attack": 0.1014,
+  "severity_pred": 0.3559
+ },
+ {
+  "event": "netflow: sustained outbound transfer of 286 MB from WKSTN-09 to a cloud storage endpoint during lunch hour; no matching backup or sync job on record",
+  "family": "cloud_upload",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.5,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.553,
+   "suspicious": 0.2842,
+   "malicious": 0.1628
+  },
+  "p_winner": 0.553,
+  "p_attack": 0.0862,
+  "severity_pred": 0.3464
+ },
+ {
+  "event": "SIGMA ALERT [HIGH] Lateral Movement SMB Port 445 Discovery (MITRE T1021.002): WKSTN-04 enumerated SMB on every reachable domain host",
+  "family": "smb_lateral_sweep",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.86,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8474,
+   "suspicious": 0.0768,
+   "malicious": 0.0758
+  },
+  "p_winner": 0.8474,
+  "p_attack": 0.8711,
+  "severity_pred": 0.4758
+ },
+ {
+  "event": "PROCESS_CREATION event on WKSTN-09: process=powershell.exe parent=excel.exe command_line=\"powershell -ep bypass -w hidden -enc aQBmACAAKABpAG4AdgBvAGsA...\" user=s.iyer",
+  "family": "powershell_office",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.96,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.3951,
+   "suspicious": 0.2311,
+   "malicious": 0.3738
+  },
+  "p_winner": 0.3951,
+  "p_attack": 1.0,
+  "severity_pred": 0.6344
+ },
+ {
+  "event": "uptime probe: WKSTN-09 responded to ICMP and SNMPv3 poll from the monitoring server; all interfaces nominal",
+  "family": "health_checks",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.0,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9164,
+   "suspicious": 0.044,
+   "malicious": 0.0396
+  },
+  "p_winner": 0.9164,
+  "p_attack": 0.023,
+  "severity_pred": 0.2978
+ },
+ {
+  "event": "auth.log: root logged in from the jump host 192.168.1.10 and ran 'systemctl status sentinel' (routine admin check)",
+  "family": "ssh_admin_ok",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.12,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9143,
+   "suspicious": 0.0416,
+   "malicious": 0.0441
+  },
+  "p_winner": 0.9143,
+  "p_attack": 0.0436,
+  "severity_pred": 0.2819
+ },
+ {
+  "event": "[ALERT] PRIVILEGE_ESCALATION: multiple failed 'sudo' root escalation attempts from session of user p.nair on WKSTN-12",
+  "family": "sudo_priv_esc",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.86,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0752,
+   "suspicious": 0.2688,
+   "malicious": 0.656
+  },
+  "p_winner": 0.656,
+  "p_attack": 0.9653,
+  "severity_pred": 0.6448
+ },
+ {
+  "event": "WIN-EVENT 4624 via VPN: a.sharma authenticated from Netherlands 35 minutes after a Hyderabad logon (impossible-travel pattern, may be a commercial VPN exit)",
+  "family": "vpn_new_country",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.6,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2814,
+   "suspicious": 0.3533,
+   "malicious": 0.3653
+  },
+  "p_winner": 0.3653,
+  "p_attack": 1.0,
+  "severity_pred": 0.3397
+ },
+ {
+  "event": "Sysmon[1] Process Create on WKSTN-04: Image: C:\\Program Files\\SentinelLab\\inventory_agent.exe, CommandLine: \"inventory_agent.exe\" --service, ParentImage: services.exe, User: SYSTEM",
+  "family": "inventory_baseline",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.05,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.6068,
+   "suspicious": 0.2048,
+   "malicious": 0.1884
+  },
+  "p_winner": 0.6068,
+  "p_attack": 0.1968,
+  "severity_pred": 0.4478
+ },
+ {
+  "event": "THREAT [TRAPPED] HONEYPOT_SSH from 45.155.204.226: credential guessing against fake SSH service, last attempt username=\"oracle\" password=\"12345678\"",
+  "family": "honeypot_ssh",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.7,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0585,
+   "suspicious": 0.2332,
+   "malicious": 0.7083
+  },
+  "p_winner": 0.7083,
+  "p_attack": 1.0,
+  "severity_pred": 0.6907
+ },
+ {
+  "event": "perimeter log: outbound plaintext FTP session from WKSTN-12 to 198.51.100.139 transferring 37 MB; legacy protocol flagged for review",
+  "family": "plaintext_ftp",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.44,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.6636,
+   "suspicious": 0.2077,
+   "malicious": 0.1287
+  },
+  "p_winner": 0.6636,
+  "p_attack": 0.0956,
+  "severity_pred": 0.3257
+ },
+ {
+  "event": "SIGMA ALERT [CRITICAL] Credential Dumping via LSASS Memory Access on WKSTN-12 (MITRE T1003.001): comsvcs.dll read lsass.exe memory",
+  "family": "lsass_dump",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.91,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.273,
+   "suspicious": 0.2929,
+   "malicious": 0.4341
+  },
+  "p_winner": 0.4341,
+  "p_attack": 0.9994,
+  "severity_pred": 0.7574
+ },
+ {
+  "event": "WIN-EVENT 4624 via VPN: j.malhotra authenticated from Brazil 35 minutes after a Hyderabad logon (impossible-travel pattern, may be a commercial VPN exit)",
+  "family": "vpn_new_country",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.58,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.311,
+   "suspicious": 0.3346,
+   "malicious": 0.3545
+  },
+  "p_winner": 0.3545,
+  "p_attack": 1.0,
+  "severity_pred": 0.3424
+ },
+ {
+  "event": "THREAT [TRAPPED] HONEYPOT_HTTP from 203.0.113.45: exploit probe \"GET /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php HTTP/1.1\" against decoy web service",
+  "family": "honeypot_http",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.82,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0232,
+   "suspicious": 0.1152,
+   "malicious": 0.8615
+  },
+  "p_winner": 0.8615,
+  "p_attack": 1.0,
+  "severity_pred": 0.7725
+ },
+ {
+  "event": "[ALERT] PRIVILEGE_ESCALATION: multiple failed 'sudo' root escalation attempts from session of user m.osei on BACKUP-VAULT-01",
+  "family": "sudo_priv_esc",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.86,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0581,
+   "suspicious": 0.4189,
+   "malicious": 0.523
+  },
+  "p_winner": 0.523,
+  "p_attack": 0.9757,
+  "severity_pred": 0.5514
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24218 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.06,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8583,
+   "suspicious": 0.066,
+   "malicious": 0.0757
+  },
+  "p_winner": 0.8583,
+  "p_attack": 0.0872,
+  "severity_pred": 0.3067
+ },
+ {
+  "event": "wuauserv on WKSTN-12: 13 updates downloaded from the internal WSUS server and staged for the maintenance window",
+  "family": "windows_update",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.04,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8916,
+   "suspicious": 0.0616,
+   "malicious": 0.0468
+  },
+  "p_winner": 0.8916,
+  "p_attack": 0.028,
+  "severity_pred": 0.3059
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24215 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.06,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8653,
+   "suspicious": 0.062,
+   "malicious": 0.0727
+  },
+  "p_winner": 0.8653,
+  "p_attack": 0.0892,
+  "severity_pred": 0.3055
+ },
+ {
+  "event": "perimeter log: outbound plaintext FTP session from WKSTN-12 to 198.51.100.125 transferring 23 MB; legacy protocol flagged for review",
+  "family": "plaintext_ftp",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.45,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.6747,
+   "suspicious": 0.1852,
+   "malicious": 0.1402
+  },
+  "p_winner": 0.6747,
+  "p_attack": 0.0986,
+  "severity_pred": 0.3307
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24178 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.02,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8564,
+   "suspicious": 0.067,
+   "malicious": 0.0766
+  },
+  "p_winner": 0.8564,
+  "p_attack": 0.0872,
+  "severity_pred": 0.3009
+ },
+ {
+  "event": "Sep 19 19:44:09 edge-fw kernel: [UFW BLOCK] IN=wan0 SRC=198.51.100.56 DST=192.168.1.20 PROTO=TCP SPT=36307 DPT=22 SYN",
+  "family": "ufw_single_block",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.42,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1226,
+   "suspicious": 0.5141,
+   "malicious": 0.3633
+  },
+  "p_winner": 0.5141,
+  "p_attack": 0.794,
+  "severity_pred": 0.548
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24207 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.06,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8609,
+   "suspicious": 0.0628,
+   "malicious": 0.0763
+  },
+  "p_winner": 0.8609,
+  "p_attack": 0.0955,
+  "severity_pred": 0.2966
+ },
+ {
+  "event": "honeypot[http]: single GET / from 198.51.100.80 with an ordinary browser user-agent, then disconnect; no follow-up probes",
+  "family": "honeypot_touch",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.34,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2169,
+   "suspicious": 0.0641,
+   "malicious": 0.719
+  },
+  "p_winner": 0.719,
+  "p_attack": 0.9966,
+  "severity_pred": 0.2245
+ },
+ {
+  "event": "nginx access: 45.155.204.142 - - \"GET /login.php?user=admin'+OR+1=1-- HTTP/1.1\" 200 6382 \"-\" \"sqlmap/1.7\"",
+  "family": "sql_injection",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.89,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.4624,
+   "suspicious": 0.2135,
+   "malicious": 0.3242
+  },
+  "p_winner": 0.4624,
+  "p_attack": 0.7709,
+  "severity_pred": 0.2805
+ },
+ {
+  "event": "uptime probe: WKSTN-04 responded to ICMP and SNMPv3 poll from the monitoring server; all interfaces nominal",
+  "family": "health_checks",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.02,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9209,
+   "suspicious": 0.0416,
+   "malicious": 0.0375
+  },
+  "p_winner": 0.9209,
+  "p_attack": 0.0216,
+  "severity_pred": 0.2962
+ },
+ {
+  "event": "PROCESS_CREATION event on WKSTN-12: process=powershell.exe parent=excel.exe command_line=\"powershell -ep bypass -w hidden -enc aQBmACAAKABpAG4AdgBvAGsA...\" user=m.osei",
+  "family": "powershell_office",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.92,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2746,
+   "suspicious": 0.2225,
+   "malicious": 0.5028
+  },
+  "p_winner": 0.5028,
+  "p_attack": 1.0,
+  "severity_pred": 0.6684
+ },
+ {
+  "event": "identity alert: repeated MFA prompts for m.osei following one failed password attempt from an external IP; push-bombing pattern, no successful auth yet",
+  "family": "mfa_fatigue",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.67,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.298,
+   "suspicious": 0.4503,
+   "malicious": 0.2517
+  },
+  "p_winner": 0.4503,
+  "p_attack": 0.4754,
+  "severity_pred": 0.3784
+ },
+ {
+  "event": "[ThreatIntel OFFLINE-HEURISTIC] IP 203.0.113.12 - confidence 60% - recommendation: ROUTE_TO_HONEYPOT (Spamhaus DROP-listed range, documented botnet C2 hosting); outbound connection from WKSTN-04 flagged",
+  "family": "c2_beacon",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.85,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.138,
+   "suspicious": 0.326,
+   "malicious": 0.536
+  },
+  "p_winner": 0.536,
+  "p_attack": 0.9331,
+  "severity_pred": 0.3786
+ },
+ {
+  "event": "identity log: s.iyer completed MFA enrolment refresh (authenticator app) after helpdesk verification call",
+  "family": "password_change",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.03,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8816,
+   "suspicious": 0.0604,
+   "malicious": 0.058
+  },
+  "p_winner": 0.8816,
+  "p_attack": 0.0327,
+  "severity_pred": 0.2691
+ },
+ {
+  "event": "web log: repeated 404s from 203.0.113.29 for /.git/HEAD, /server-status, /wp-admin/ spread across 45 minutes",
+  "family": "admin_path_probe",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.57,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1184,
+   "suspicious": 0.7101,
+   "malicious": 0.1715
+  },
+  "p_winner": 0.7101,
+  "p_attack": 0.5508,
+  "severity_pred": 0.3845
+ },
+ {
+  "event": "identity log: a.sharma completed MFA enrolment refresh (authenticator app) after helpdesk verification call",
+  "family": "password_change",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.09,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8695,
+   "suspicious": 0.066,
+   "malicious": 0.0645
+  },
+  "p_winner": 0.8695,
+  "p_attack": 0.0323,
+  "severity_pred": 0.2748
+ },
+ {
+  "event": "auth.log: itadmin logged in from the jump host 192.168.1.10 and ran 'systemctl status sentinel' (routine admin check)",
+  "family": "ssh_admin_ok",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.02,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.9303,
+   "suspicious": 0.0352,
+   "malicious": 0.0345
+  },
+  "p_winner": 0.9303,
+  "p_attack": 0.0016,
+  "severity_pred": 0.2457
+ },
+ {
+  "event": "nginx: 667 half-open connections from 198.51.100.178 held for over 120s; [ALERT] DDOS_SLOWLORIS: connection exhaustion attack detected on port 80",
+  "family": "slowloris_ddos",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.78,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.1032,
+   "suspicious": 0.5009,
+   "malicious": 0.3959
+  },
+  "p_winner": 0.5009,
+  "p_attack": 0.9525,
+  "severity_pred": 0.4928
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24128 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.05,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8733,
+   "suspicious": 0.0552,
+   "malicious": 0.0714
+  },
+  "p_winner": 0.8733,
+  "p_attack": 0.1165,
+  "severity_pred": 0.2928
+ },
+ {
+  "event": "wuauserv on FILE-SRV: 2 updates downloaded from the internal WSUS server and staged for the maintenance window",
+  "family": "windows_update",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.02,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8391,
+   "suspicious": 0.0958,
+   "malicious": 0.0651
+  },
+  "p_winner": 0.8391,
+  "p_attack": 0.0224,
+  "severity_pred": 0.3122
+ },
+ {
+  "event": "THREAT [TRAPPED] HONEYPOT_HTTP from 203.0.113.21: exploit probe \"GET /actuator/env HTTP/1.1\" against decoy web service",
+  "family": "honeypot_http",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.88,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0497,
+   "suspicious": 0.0832,
+   "malicious": 0.867
+  },
+  "p_winner": 0.867,
+  "p_attack": 0.9997,
+  "severity_pred": 0.719
+ },
+ {
+  "event": "sshd[9464]: 131 failed password attempts for admin from 198.51.100.234 in 60 seconds; latest: Failed password for admin from 198.51.100.234 port 51135 ssh2",
+  "family": "ssh_brute_force",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.81,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.3722,
+   "suspicious": 0.3398,
+   "malicious": 0.288
+  },
+  "p_winner": 0.3722,
+  "p_attack": 0.7865,
+  "severity_pred": 0.4927
+ },
+ {
+  "event": "Sysmon[1] Process Create on DC01-PROD: Image: C:\\Program Files\\SentinelLab\\w32time_svc.exe, CommandLine: \"w32time_svc.exe\" --service, ParentImage: services.exe, User: SYSTEM",
+  "family": "inventory_baseline",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.11,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.7187,
+   "suspicious": 0.1517,
+   "malicious": 0.1296
+  },
+  "p_winner": 0.7187,
+  "p_attack": 0.1415,
+  "severity_pred": 0.4203
+ },
+ {
+  "event": "SIGMA ALERT [CRITICAL] Credential Dumping via LSASS Memory Access on WKSTN-12 (MITRE T1003.001): mimikatz.exe read lsass.exe memory",
+  "family": "lsass_dump",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.98,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.1694,
+   "suspicious": 0.2289,
+   "malicious": 0.6017
+  },
+  "p_winner": 0.6017,
+  "p_attack": 1.0,
+  "severity_pred": 0.7936
+ },
+ {
+  "event": "Sep 18 21:21:04 edge-fw kernel: [UFW BLOCK] IN=wan0 SRC=203.0.113.26 DST=192.168.1.20 PROTO=TCP SPT=35686 DPT=1433 SYN",
+  "family": "ufw_single_block",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.52,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.2148,
+   "suspicious": 0.4904,
+   "malicious": 0.2948
+  },
+  "p_winner": 0.4904,
+  "p_attack": 0.7065,
+  "severity_pred": 0.5036
+ },
+ {
+  "event": "directory audit: account 'svc_report' added to Remote Desktop Users on FILE-SRV outside the change window",
+  "family": "account_created",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.53,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8286,
+   "suspicious": 0.1002,
+   "malicious": 0.0712
+  },
+  "p_winner": 0.8286,
+  "p_attack": 0.0518,
+  "severity_pred": 0.2967
+ },
+ {
+  "event": "honeypot[http]: single GET / from 203.0.113.231 with an ordinary browser user-agent, then disconnect; no follow-up probes",
+  "family": "honeypot_touch",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.36,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.2488,
+   "suspicious": 0.0667,
+   "malicious": 0.6845
+  },
+  "p_winner": 0.6845,
+  "p_attack": 0.9844,
+  "severity_pred": 0.2004
+ },
+ {
+  "event": "netflow: sustained outbound transfer of 280 MB from WKSTN-09 to a cloud storage endpoint during lunch hour; no matching backup or sync job on record",
+  "family": "cloud_upload",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.6,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.5432,
+   "suspicious": 0.2862,
+   "malicious": 0.1706
+  },
+  "p_winner": 0.5432,
+  "p_attack": 0.0801,
+  "severity_pred": 0.3442
+ },
+ {
+  "event": "identity alert: repeated MFA prompts for d.khan following one failed password attempt from an external IP; push-bombing pattern, no successful auth yet",
+  "family": "mfa_fatigue",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.56,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.2916,
+   "suspicious": 0.4525,
+   "malicious": 0.2558
+  },
+  "p_winner": 0.4525,
+  "p_attack": 0.4788,
+  "severity_pred": 0.3971
+ },
+ {
+  "event": "PROCESS_CREATION on WKSTN-09: double-extension executable invoice.pdf.exe launched from user Temp directory by s.iyer, spawned by WINWORD.EXE",
+  "family": "office_dropper",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.87,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.1702,
+   "suspicious": 0.2073,
+   "malicious": 0.6225
+  },
+  "p_winner": 0.6225,
+  "p_attack": 0.9355,
+  "severity_pred": 0.6056
+ },
+ {
+  "event": "w32time_svc on DC01-PROD: time synchronization successful with internal NTP source 192.168.1.1, offset 0.05s",
+  "family": "net_basics",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.03,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.886,
+   "suspicious": 0.0317,
+   "malicious": 0.0823
+  },
+  "p_winner": 0.886,
+  "p_attack": 0.0035,
+  "severity_pred": 0.2686
+ },
+ {
+  "event": "PROCESS_CREATION on WKSTN-09: double-extension executable invoice.pdf.exe launched from user Temp directory by m.osei, spawned by WINWORD.EXE",
+  "family": "office_dropper",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.86,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0644,
+   "suspicious": 0.1278,
+   "malicious": 0.8078
+  },
+  "p_winner": 0.8078,
+  "p_attack": 1.0,
+  "severity_pred": 0.6052
+ },
+ {
+  "event": "w32time_svc on DC01-PROD: time synchronization successful with internal NTP source 192.168.1.1, offset 0.08s",
+  "family": "net_basics",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.01,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8912,
+   "suspicious": 0.0308,
+   "malicious": 0.0779
+  },
+  "p_winner": 0.8912,
+  "p_attack": 0.0041,
+  "severity_pred": 0.2645
+ },
+ {
+  "event": "THREAT [TRAPPED] HONEYPOT_SSH from 103.75.190.41: credential guessing against fake SSH service, last attempt username=\"admin\" password=\"123456\"",
+  "family": "honeypot_ssh",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.75,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.0477,
+   "suspicious": 0.2115,
+   "malicious": 0.7408
+  },
+  "p_winner": 0.7408,
+  "p_attack": 1.0,
+  "severity_pred": 0.6672
+ },
+ {
+  "event": "teams_machine_wide.exe on WKSTN-12: auto-update to version 24220 completed; signature verified",
+  "family": "app_updates",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.01,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8611,
+   "suspicious": 0.0636,
+   "malicious": 0.0753
+  },
+  "p_winner": 0.8611,
+  "p_attack": 0.1043,
+  "severity_pred": 0.3054
+ },
+ {
+  "event": "sshd[6357]: 45 failed password attempts for admin from 198.51.100.162 in 60 seconds; latest: Failed password for admin from 198.51.100.162 port 40120 ssh2",
+  "family": "ssh_brute_force",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.88,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.5934,
+   "suspicious": 0.1985,
+   "malicious": 0.2082
+  },
+  "p_winner": 0.5934,
+  "p_attack": 0.7134,
+  "severity_pred": 0.4333
+ },
+ {
+  "event": "web log: repeated 404s from 103.75.190.12 for /.git/HEAD, /server-status, /wp-admin/ spread across 45 minutes",
+  "family": "admin_path_probe",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.46,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.085,
+   "suspicious": 0.7282,
+   "malicious": 0.1868
+  },
+  "p_winner": 0.7282,
+  "p_attack": 0.5841,
+  "severity_pred": 0.3923
+ },
+ {
+  "event": "wuauserv on WKSTN-09: 11 updates downloaded from the internal WSUS server and staged for the maintenance window",
+  "family": "windows_update",
+  "gold_verdict": "benign",
+  "gold_is_attack": false,
+  "gold_severity": 0.1,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8929,
+   "suspicious": 0.0614,
+   "malicious": 0.0456
+  },
+  "p_winner": 0.8929,
+  "p_attack": 0.0293,
+  "severity_pred": 0.3109
+ },
+ {
+  "event": "nginx: 187 half-open connections from 198.51.100.168 held for over 120s; [ALERT] DDOS_SLOWLORIS: connection exhaustion attack detected on port 80",
+  "family": "slowloris_ddos",
+  "gold_verdict": "malicious",
+  "gold_is_attack": true,
+  "gold_severity": 0.76,
+  "pred_verdict": "suspicious",
+  "p_verdict": {
+   "benign": 0.0979,
+   "suspicious": 0.5147,
+   "malicious": 0.3874
+  },
+  "p_winner": 0.5147,
+  "p_attack": 0.9605,
+  "severity_pred": 0.4879
+ },
+ {
+  "event": "WIN-EVENT 4624 via VPN: k.reddy authenticated from Netherlands 35 minutes after a Hyderabad logon (impossible-travel pattern, may be a commercial VPN exit)",
+  "family": "vpn_new_country",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.62,
+  "pred_verdict": "malicious",
+  "p_verdict": {
+   "benign": 0.291,
+   "suspicious": 0.3329,
+   "malicious": 0.3761
+  },
+  "p_winner": 0.3761,
+  "p_attack": 0.9999,
+  "severity_pred": 0.3303
+ },
+ {
+  "event": "directory audit: account 'temp_admin' added to Remote Desktop Users on FILE-SRV outside the change window",
+  "family": "account_created",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.47,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.8004,
+   "suspicious": 0.1303,
+   "malicious": 0.0694
+  },
+  "p_winner": 0.8004,
+  "p_attack": 0.0778,
+  "severity_pred": 0.279
+ },
+ {
+  "event": "perimeter log: outbound plaintext FTP session from WKSTN-12 to 203.0.113.93 transferring 8 MB; legacy protocol flagged for review",
+  "family": "plaintext_ftp",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.38,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.6535,
+   "suspicious": 0.2062,
+   "malicious": 0.1402
+  },
+  "p_winner": 0.6535,
+  "p_attack": 0.0913,
+  "severity_pred": 0.2939
+ },
+ {
+  "event": "perimeter log: outbound plaintext FTP session from WKSTN-12 to 203.0.113.198 transferring 29 MB; legacy protocol flagged for review",
+  "family": "plaintext_ftp",
+  "gold_verdict": "suspicious",
+  "gold_is_attack": false,
+  "gold_severity": 0.43,
+  "pred_verdict": "benign",
+  "p_verdict": {
+   "benign": 0.6572,
+   "suspicious": 0.2037,
+   "malicious": 0.139
+  },
+  "p_winner": 0.6572,
+  "p_attack": 0.0962,
+  "severity_pred": 0.2924
+ }
+]
