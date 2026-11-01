@@ -29,8 +29,8 @@ All metrics were computed using the deterministic evaluation harness `training/e
 | **P(Attack) on Real Attacks** | 0.8570 | **0.9572** | **+0.1002** | Extreme sensitivity to active threats |
 | **P(Attack) on Benign Events** | 0.1528 | 0.1867 | +0.0339 | Low false-alarm floor |
 | **Severity Mean Absolute Error (MAE)** | 0.2388 | **0.1262** | **-0.1126** | **47.1% error reduction** |
-| **Mean Latency per Event** | 56 ms (0.056s) | **54 ms (0.054s)** | -2 ms | Steady-state sub-55ms execution |
-| **Median Latency per Event** | 52 ms (0.052s) | **51 ms (0.051s)** | -1 ms | High-frequency telemetry ready |
+| **Mean Latency per Event** | 49 ms (0.049s) | **45 ms (0.045s)** | -4 ms | Steady-state sub-55ms execution |
+| **Median Latency per Event** | 45 ms (0.045s) | **42 ms (0.042s)** | -3 ms | High-frequency telemetry ready |
 
 ---
 
