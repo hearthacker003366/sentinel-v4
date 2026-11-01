@@ -77,7 +77,7 @@ Held-out evaluation ([EVAL.md](EVAL.md), tested on 101 held-out rows with zero t
 - **Autonomous Auto-Act Rate ($\ge 0.85$):** 83.17% (2.6x increase over baseline 31.68% at 91.67% accuracy)
 - **Cognitive Alert Fatigue Reduction:** Reduces Muse Spark escalations from 68.32% down to **16.83%**
 - **Severity Prediction MAE:** 0.1262 (47.1% error reduction over baseline 0.2388)
-- **Execution Latency:** 54 ms mean / 51 ms median (steady-state sub-55ms fast triage)
+- **Execution Latency:** 45 ms mean / 42 ms median (steady-state sub-55ms fast triage)
 
 See full metrics and confusion breakdown in [EVAL.md](EVAL.md).
 
