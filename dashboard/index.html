@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>SENTINEL V4 // AUTONOMOUS AI SOC COMMAND</title>
+  
+  <!-- Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <!-- Design System Fonts: Space Grotesk & JetBrains Mono -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  
+  <!-- Tailwind CSS with Stitch Custom Theme -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "background": "#0f131d",
+            "outline": "#849495",
+            "primary-fixed-dim": "#00dbe9",
+            "tertiary-container": "#00f985",
+            "outline-variant": "#3b494b",
+            "surface-dim": "#0f131d",
+            "on-primary-container": "#006970",
+            "on-secondary-fixed-variant": "#91002d",
+            "on-error": "#690005",
+            "tertiary": "#daffde",
+            "on-primary-fixed-variant": "#004f54",
+            "secondary-fixed-dim": "#ffb2b8",
+            "error": "#ffb4ab",
+            "tertiary-fixed": "#60ff99",
+            "surface-container-highest": "#313540",
+            "error-container": "#93000a",
+            "on-surface": "#dfe2f1",
+            "on-secondary-fixed": "#40000f",
+            "on-tertiary-container": "#006d37",
+            "surface-tint": "#00dbe9",
+            "inverse-on-surface": "#2c303b",
+            "on-secondary": "#67001d",
+            "on-error-container": "#ffdad6",
+            "on-primary-fixed": "#002022",
+            "inverse-surface": "#dfe2f1",
+            "on-tertiary": "#003919",
+            "primary-container": "#00f0ff",
+            "surface-bright": "#353944",
+            "secondary": "#ffb2b8",
+            "secondary-fixed": "#ffdadb",
+            "surface": "#0f131d",
+            "surface-container-high": "#262a35",
+            "secondary-container": "#ff506e",
+            "on-tertiary-fixed-variant": "#005228",
+            "primary": "#dbfcff",
+            "surface-container": "#1c1f2a",
+            "surface-container-low": "#171b26",
+            "on-primary": "#00363a",
+            "on-background": "#dfe2f1",
+            "tertiary-fixed-dim": "#00e479",
+            "primary-fixed": "#7df4ff",
+            "on-tertiary-fixed": "#00210c",
+            "inverse-primary": "#006970",
+            "on-surface-variant": "#b9cacb",
+            "surface-container-lowest": "#0a0e18",
+            "on-secondary-container": "#5b0018",
+            "surface-variant": "#313540"
+          },
+          "fontFamily": {
+            "body-sm": ["Space Grotesk", "sans-serif"],
+            "mono-lg": ["JetBrains Mono", "monospace"],
+            "headline-lg": ["Space Grotesk", "sans-serif"],
+            "body-lg": ["Space Grotesk", "sans-serif"],
+            "body-md": ["Space Grotesk", "sans-serif"],
+            "headline-sm": ["Space Grotesk", "sans-serif"],
+            "mono-md": ["JetBrains Mono", "monospace"],
+            "label-caps": ["JetBrains Mono", "monospace"],
+            "headline-md": ["Space Grotesk", "sans-serif"],
+            "mono-sm": ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Cytoscape Graph Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+
+  <style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Cyber tactical scanlines */
+    .cyber-scanlines {
+      background: linear-gradient(rgba(10, 14, 24, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+      background-size: 100% 4px;
+    }
+    
+    /* Tactical grid background */
+    .tactical-grid-bg {
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 70%),
+        linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 32px 32px, 32px 32px;
+    }
+
+    /* Holographic radar sweep */
+    @keyframes radar-sweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .radar-beam {
+      animation: radar-sweep 14s linear infinite;
+    }
+
+    /* Pulse breach animation */
+    @keyframes pulse-breach {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.4); opacity: 0.2; }
+    }
+    .animate-breach-pulse {
+      animation: pulse-breach 2s ease-in-out infinite;
+    }
+
+    /* Tactical strobe */
+    @keyframes tactical-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    .strobe-fast {
+      animation: tactical-blink 1s steps(2, start) infinite;
+    }
+
+    /* Custom tactical scrollbars */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0e18;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3b494b;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+    }
+
+    #cy {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 15;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-sm min-h-screen overflow-x-hidden selection:bg-primary-container selection:text-on-primary-fixed">
+
+  <!-- ========================================================================= -->
+  <!-- TOP APP BAR / BRAND HEADER                                                -->
+  <!-- ========================================================================= -->
+  <header class="flex justify-between items-center w-full px-4 h-12 border-b border-outline-variant bg-surface-container-lowest/90 backdrop-blur-md sticky top-0 z-50">
+    <!-- Left: Brand / System Architecture Badges -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 bg-tertiary-container strobe-fast shadow-[0_0_8px_#00f985]"></span>
+        <span class="font-mono-md text-xs text-primary-container font-bold tracking-wider">
+          SENTINEL V4 // AUTONOMOUS AI SOC COMMAND
+        </span>
+      </div>
+
+      <div class="hidden xl:flex items-center gap-1.5 px-2 py-0.5 border border-outline-variant bg-surface-container-low text-tertiary font-label-caps text-[10px]">
+        <span class="w-1.5 h-1.5 bg-tertiary-container"></span>
+        SYSTEM-1: LAYA (45ms)
+      </div>
+
+      <div class="hidden xl:flex items-center gap-1.5 px-2 py-0.5 border border-outline-variant bg-surface-container-low text-primary-container font-label-caps text-[10px]">
+        <span class="w-1.5 h-1.5 bg-primary-container"></span>
+        SYSTEM-2: MUSE SPARK 1.3
+      </div>
+
+      <div class="hidden xl:flex items-center gap-1.5 px-2 py-0.5 border border-outline-variant bg-surface-container-low text-[#ffcc00] font-label-caps text-[10px]">
+        <span class="w-1.5 h-1.5 bg-[#ffcc00]"></span>
+        GATE: 0.85 HITL
+      </div>
+
+      <!-- Prominent Fallback Warning Banner -->
+      <div id="banner-warning" class="hidden px-2.5 py-0.5 bg-error-container/40 border border-secondary-container text-secondary font-mono-sm text-xs font-bold flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs">warning</span>
+        [WARNING] LIVE MODEL UNAVAILABLE — RECORDED RESPONSE
+      </div>
+    </div>
+
+    <!-- Right: Telemetry UTC Clock & Reset Control -->
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex flex-col text-right font-mono-sm text-xs">
+        <span id="clock" class="text-on-surface font-semibold tracking-wider">00:00:00 UTC</span>
+        <span class="text-outline text-[10px] font-label-caps">LATENCY: 45ms MEAN / 42ms MEDIAN</span>
+      </div>
+
+      <button onclick="resetEpisode()" class="flex items-center gap-1 px-2.5 py-1 bg-surface-container hover:bg-error-container/30 border border-outline-variant hover:border-secondary-container text-on-surface hover:text-secondary font-mono-sm text-xs transition-colors" title="Reset Episode State">
+        <span class="material-symbols-outlined text-xs">restart_alt</span>
+        RESET
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- TACTICAL CONTROL BAR & METRIC TELEMETRY RIBBON                             -->
+  <!-- ========================================================================= -->
+  <div class="border-b border-outline-variant bg-surface-container-low/70 px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs font-mono-sm">
+    <!-- Left: Scenario Buttons -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-outline uppercase text-[10px] tracking-wider font-bold">Scenarios:</span>
+      <button onclick="runScenario(1)" class="px-2.5 py-1 bg-surface-container border border-primary-container/40 text-primary-container hover:bg-primary-container/20 transition-all font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs">play_arrow</span>
+        Scenario 1: SSH Brute &rarr; SMB
+      </button>
+      <button onclick="runScenario(2)" class="px-2.5 py-1 bg-surface-container border border-secondary-container/40 text-secondary hover:bg-secondary-container/20 transition-all font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs">play_arrow</span>
+        Scenario 2: C2 Beacon & Exfil
+      </button>
+      <button onclick="runScenario(3)" class="px-2.5 py-1 bg-surface-container border border-tertiary-container/40 text-tertiary hover:bg-tertiary-container/20 transition-all font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs">play_arrow</span>
+        Scenario 3: Benign Discriminator
+      </button>
+
+      <span class="text-outline uppercase text-[10px] tracking-wider font-bold ml-2">Bursts:</span>
+      <button onclick="triggerPersona('brute_force')" class="px-2 py-0.5 bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface-variant hover:text-primary-container">SSH Burst</button>
+      <button onclick="triggerPersona('lateral_mover')" class="px-2 py-0.5 bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface-variant hover:text-primary-container">SMB Pivot</button>
+      <button onclick="triggerPersona('privilege_escalator')" class="px-2 py-0.5 bg-surface-container-high border border-outline-variant hover:border-secondary-container text-on-surface-variant hover:text-secondary">LSASS Dump</button>
+      <button onclick="triggerPersona('c2_exfiltrator')" class="px-2 py-0.5 bg-surface-container-high border border-outline-variant hover:border-secondary-container text-on-surface-variant hover:text-secondary">C2 Exfil</button>
+      <button onclick="triggerPersona('benign_user')" class="px-2 py-0.5 bg-surface-container-high border border-outline-variant hover:border-tertiary-container text-on-surface-variant hover:text-tertiary">Benign User</button>
+    </div>
+
+    <!-- Right: Telemetry Counters -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1.5">
+        <span class="text-outline">INGESTED:</span>
+        <span id="cnt-total" class="font-bold text-on-surface">0</span>
+      </div>
+      <div class="h-3 w-px bg-outline-variant"></div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-outline">AUTO-ACT:</span>
+        <span class="font-bold text-tertiary-container">83.2% (DRY-RUN)</span>
+      </div>
+      <div class="h-3 w-px bg-outline-variant"></div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-outline">ESCALATE:</span>
+        <span class="font-bold text-[#b57edc]">16.8%</span>
+      </div>
+      <div class="h-3 w-px bg-outline-variant"></div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-outline">PENDING HITL:</span>
+        <span id="cnt-pending" class="font-bold text-[#ffcc00]">0</span>
+      </div>
+      <div class="h-3 w-px bg-outline-variant"></div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-outline">CONTAINED:</span>
+        <span id="cnt-contain" class="font-bold text-primary-container">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN TACTICAL WORKSPACE: 3-PANE MULTI-DISPLAY GRID                         -->
+  <!-- ========================================================================= -->
+  <div class="flex h-[calc(100vh-6.5rem)] w-full overflow-hidden bg-surface-container-lowest">
+    
+    <!-- ======================================================================= -->
+    <!-- PANE 1: THREAT INTELLIGENCE & LIVE INGRESS FEED (Width: 340px)          -->
+    <!-- ======================================================================= -->
+    <section class="w-84 border-r border-outline-variant bg-surface-container-low/40 backdrop-blur-md flex flex-col shrink-0 overflow-hidden">
+      <!-- Section Header -->
+      <div class="p-3 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+        <span class="font-label-caps text-xs text-primary-container tracking-wider flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 bg-primary-container"></span>
+          THREAT INTEL & INGRESS FEED
+        </span>
+        <span class="text-tertiary-container font-mono-sm text-xs strobe-fast">● REC</span>
+      </div>
+
+      <!-- MITRE ATT&CK Active Tactics Tracker -->
+      <div class="p-3 border-b border-outline-variant flex flex-col gap-2">
+        <div class="flex items-center justify-between text-outline font-label-caps text-[10px]">
+          <span>ACTIVE MITRE TACTICS</span>
+          <span>CVSS IMPACT</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 font-mono-sm text-[11px]">
+          <div class="p-1.5 border border-secondary-container/50 bg-error-container/10 flex flex-col">
+            <span class="text-secondary font-bold">T1059.001 PowerShell</span>
+            <span class="text-outline text-[10px]">CVSS 9.8 // CRIT</span>
+          </div>
+          <div class="p-1.5 border border-secondary-container/50 bg-error-container/10 flex flex-col">
+            <span class="text-secondary font-bold">T1021.002 SMB Pivot</span>
+            <span class="text-outline text-[10px]">CVSS 9.1 // CRIT</span>
+          </div>
+          <div class="p-1.5 border border-outline-variant bg-surface-container-low flex flex-col">
+            <span class="text-on-surface font-semibold">T1078 Valid Account</span>
+            <span class="text-outline text-[10px]">CVSS 8.4 // HIGH</span>
+          </div>
+          <div class="p-1.5 border border-outline-variant bg-surface-container-low flex flex-col">
+            <span class="text-primary-container font-semibold">T1562.001 EDR Blind</span>
+            <span class="text-outline text-[10px]">CVSS 7.9 // ELEV</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Event Ingress Feed Stream -->
+      <div class="p-2 border-b border-outline-variant bg-surface-container-low/60 flex items-center justify-between text-outline text-[10px] font-label-caps">
+        <span>LIVE TELEMETRY STREAM (LAST 20 EVENTS)</span>
+        <span id="feed-count">0 EVENTS</span>
+      </div>
+      <div id="feed" class="flex-1 overflow-y-auto p-2 flex flex-col gap-2 font-mono-sm">
+        <div class="text-outline text-center my-auto py-12 text-xs">
+          Awaiting telemetry stream...<br>Click a Scenario or Burst above.
+        </div>
+      </div>
+
+      <!-- Host Sector Vulnerability Density -->
+      <div class="p-2.5 border-t border-outline-variant bg-surface-container-low/80 flex flex-col gap-1.5">
+        <div class="flex justify-between font-label-caps text-[10px] text-outline">
+          <span>HOST RISK SECTOR DENSITY</span>
+          <span class="text-secondary">ZONE 4: EXPOSED</span>
+        </div>
+        <div class="grid grid-cols-4 gap-1 text-center font-mono-sm text-[11px]">
+          <div class="bg-surface-container p-1 border border-outline-variant">
+            <div class="text-outline text-[9px]">DMZ</div>
+            <div class="text-secondary font-bold">89%</div>
+          </div>
+          <div class="bg-surface-container p-1 border border-outline-variant">
+            <div class="text-outline text-[9px]">INTERNAL</div>
+            <div class="text-primary-container font-bold">42%</div>
+          </div>
+          <div class="bg-surface-container p-1 border border-outline-variant">
+            <div class="text-outline text-[9px]">CLOUD</div>
+            <div class="text-tertiary-container font-bold">12%</div>
+          </div>
+          <div class="bg-surface-container p-1 border border-outline-variant">
+            <div class="text-outline text-[9px]">CORE DC</div>
+            <div class="text-secondary font-bold">78%</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- PANE 2: CENTER VIEWPORT (Hero Spatial Cyber Knowledge Graph)            -->
+    <!-- ======================================================================= -->
+    <section class="flex-1 relative flex flex-col overflow-hidden tactical-grid-bg cyber-scanlines">
+      <!-- Top HUD Bar Overlay -->
+      <div class="absolute top-0 inset-x-0 p-3 flex justify-between items-center pointer-events-none z-20">
+        <div class="flex items-center gap-3">
+          <div class="px-2.5 py-1 bg-surface-container-lowest/80 backdrop-blur-md border border-outline-variant font-mono-sm text-xs text-primary-container flex items-center gap-2 pointer-events-auto">
+            <span class="material-symbols-outlined text-sm">hub</span>
+            <span>CYBER KNOWLEDGE GRAPH // LAB NETWORK TOPOLOGY</span>
+          </div>
+          <div id="graph-status" class="px-2 py-1 bg-surface-container-lowest/80 border border-outline-variant font-mono-sm text-xs text-tertiary-container pointer-events-auto">
+            LAB SCOPE SECURE
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 font-mono-sm text-xs pointer-events-auto">
+          <span class="px-2 py-0.5 bg-surface-container-lowest/80 border border-outline-variant text-primary-container">
+            9 LAB NODES // 8 RELATIONS
+          </span>
+        </div>
+      </div>
+
+      <!-- Tactical Radar Coordinate Rings (Underlay) -->
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div class="w-[520px] h-[520px] rounded-full border border-primary-container/10 flex items-center justify-center">
+          <div class="w-[390px] h-[390px] rounded-full border border-primary-container/15 flex items-center justify-center">
+            <div class="w-[260px] h-[260px] rounded-full border border-dashed border-primary-container/20 flex items-center justify-center">
+              <div class="w-[130px] h-[130px] rounded-full border border-primary-container/25"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Rotating Radar Beam -->
+        <div class="absolute w-[520px] h-[520px] radar-beam">
+          <div class="w-1/2 h-1/2 bg-gradient-to-br from-primary-container/15 to-transparent origin-bottom-right rounded-tl-full"></div>
+        </div>
+      </div>
+
+      <!-- Cytoscape Interactive Canvas -->
+      <div id="cy"></div>
+
+      <!-- Viewport HUD Navigation Controls Dock (Bottom Center) -->
+      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-surface-container-lowest/90 border border-outline-variant backdrop-blur-xl px-2.5 py-1.5 flex items-center gap-2 z-30 shadow-2xl">
+        <button onclick="resetGraphView()" class="flex items-center gap-1 px-2 py-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-mono-sm text-xs transition-colors">
+          <span class="material-symbols-outlined text-xs">restart_alt</span>
+          <span>Center Graph</span>
+        </button>
+        <button onclick="fitThreatPath()" class="flex items-center gap-1 px-2 py-1 bg-surface-container hover:bg-surface-container-high border border-secondary-container/60 text-secondary font-mono-sm text-xs transition-colors">
+          <span class="material-symbols-outlined text-xs">crisis_alert</span>
+          <span>Highlight Threat Path</span>
+        </button>
+        <div class="h-4 w-px bg-outline-variant"></div>
+        <span class="text-outline text-[10px] font-label-caps">ZOOM: SCROLL // DRAG TO PAN</span>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- PANE 3: SOAR DEFENSE, MUSE SPARK REASONING & HITL QUEUE (Width: 380px)   -->
+    <!-- ======================================================================= -->
+    <section class="w-96 border-l border-outline-variant bg-surface-container-low/40 backdrop-blur-md flex flex-col shrink-0 overflow-y-auto">
+      <!-- Section Header -->
+      <div class="p-3 border-b border-outline-variant bg-surface-container-low flex items-center justify-between sticky top-0 z-10">
+        <span class="font-label-caps text-xs text-primary-container tracking-wider flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">bolt</span>
+          SOAR & COGNITIVE REASONING
+        </span>
+        <span id="muse-model-label" class="text-primary-container font-mono-sm text-[11px] font-bold">
+          MUSE SPARK 1.3
+        </span>
+      </div>
+
+      <!-- 1. Meta Muse Spark 1.3 System-2 Reasoning Box -->
+      <div class="p-3 border-b border-outline-variant flex flex-col gap-2">
+        <div class="flex items-center justify-between text-outline font-label-caps text-[10px]">
+          <span>SYSTEM-2 FORENSIC REASONING</span>
+          <span class="text-primary-container">&lt; 0.85 LAYA ESCALATION</span>
+        </div>
+        <div class="p-3 bg-surface-container border border-outline-variant flex flex-col gap-2 font-mono-sm text-xs leading-relaxed">
+          <div id="muse-box">
+            <h4 class="text-primary-container font-bold text-xs mb-1">Dual-System Defense Standing By</h4>
+            <p class="text-on-surface-variant text-[11px]">
+              When an ambiguous intrusion or multi-hop trajectory occurs (&lt; 0.85 Laya confidence), Meta Muse Spark 1.3 conducts deep forensic threat path explanation and synthesizes reversible, expiring containment proposals.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. HITL Containment Authorization Queue -->
+      <div class="p-3 border-b border-outline-variant flex flex-col gap-2.5">
+        <div class="flex items-center justify-between text-outline font-label-caps text-[10px]">
+          <span>HITL CONTAINMENT APPROVAL QUEUE</span>
+          <span class="text-[#ffcc00] font-bold">CONSOLE: APPROVE &lt;TOKEN&gt;</span>
+        </div>
+        <div id="hitl-queue" class="flex flex-col gap-2.5">
+          <div class="p-3 bg-surface-container border border-outline-variant text-outline text-center text-xs">
+            No pending containment authorizations.
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Autonomous APT Adversary Emulation Sandbox -->
+      <div class="p-3 border-b border-outline-variant flex flex-col gap-2">
+        <div class="flex items-center justify-between text-outline font-label-caps text-[10px]">
+          <span>APT ADVERSARY EMULATION</span>
+          <span class="text-tertiary-container font-bold">SANDBOX ACTIVE</span>
+        </div>
+        <div class="p-2.5 bg-surface-container border border-outline-variant flex flex-col gap-2 font-mono-sm text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-on-surface font-semibold text-[11px]">EMULATION: APT-29 / COBALT STRIKE</span>
+            <span class="text-[10px] bg-surface-container-high text-on-surface px-1">ACTIVE</span>
+          </div>
+          <div class="w-full bg-surface-container-highest h-1.5">
+            <div class="bg-tertiary-container h-1.5 w-[85%]"></div>
+          </div>
+          <div class="flex justify-between items-center text-[11px] text-on-surface-variant">
+            <span>Containment Efficacy:</span>
+            <span class="text-tertiary-container font-bold">96.7% DEFENDED</span>
+          </div>
+          <div class="flex items-center justify-between pt-1 border-t border-outline-variant/60 text-[10px]">
+            <span class="text-outline">Autonomous Killswitch:</span>
+            <span class="text-tertiary-container font-bold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-tertiary-container"></span>
+              ENGAGED (DRY-RUN ONLY)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Quick Action Dock -->
+      <div class="p-3 bg-surface-container-lowest mt-auto flex flex-col gap-1.5 font-mono-sm text-xs">
+        <button onclick="triggerPersona('brute_force')" class="w-full py-1.5 px-2 bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface hover:text-primary-container flex items-center justify-between transition-colors">
+          <span class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">terminal</span>
+            INJECT SSH BRUTE BURST
+          </span>
+          <span class="text-outline text-[10px]">180 ATTEMPTS</span>
+        </button>
+        <button onclick="triggerPersona('lateral_mover')" class="w-full py-1.5 px-2 bg-surface-container-high border border-outline-variant hover:border-secondary-container text-on-surface hover:text-secondary flex items-center justify-between transition-colors">
+          <span class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">swap_calls</span>
+            INJECT SMB LATERAL PIVOT
+          </span>
+          <span class="text-[10px] text-secondary font-bold">lab-dc-01</span>
+        </button>
+        <button onclick="triggerPersona('benign_user')" class="w-full py-1.5 px-2 bg-surface-container-high border border-outline-variant hover:border-tertiary-container text-on-surface hover:text-tertiary flex items-center justify-between transition-colors">
+          <span class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">verified_user</span>
+            INJECT BENIGN SCANNER
+          </span>
+          <span class="text-[10px] text-tertiary">SUPPRESS</span>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT STATE ENGINE & POLLING CONTROLLER                              -->
+  <!-- ========================================================================= -->
+  <script>
+    // Live Clock
+    setInterval(() => {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toISOString().substring(11, 19) + ' UTC';
+    }, 1000);
+
+    // Initialize Cytoscape Tactical Network Graph
+    let cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: [],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'background-color': '#0f172a',
+            'border-width': 2,
+            'border-color': '#00f0ff',
+            'label': 'data(label)',
+            'color': '#dfe2f1',
+            'font-family': 'JetBrains Mono, monospace',
+            'font-size': '10px',
+            'text-valign': 'bottom',
+            'text-margin-y': 6,
+            'width': 34,
+            'height': 34,
+            'transition-property': 'background-color, border-color, width, height',
+            'transition-duration': '0.3s'
+          }
+        },
+        {
+          selector: 'node[type = "crown_jewel"]',
+          style: {
+            'border-color': '#ffcc00',
+            'background-color': '#2a2205',
+            'width': 44,
+            'height': 44,
+            'border-width': 3,
+            'color': '#ffcc00',
+            'font-weight': 'bold'
+          }
+        },
+        {
+          selector: 'node[type = "honeypot"]',
+          style: {
+            'border-color': '#00f985',
+            'background-color': '#00210c',
+            'width': 36,
+            'height': 36
+          }
+        },
+        {
+          selector: 'node[type = "gateway"]',
+          style: {
+            'border-color': '#00dbe9',
+            'background-color': '#00363a'
+          }
+        },
+        {
+          selector: 'node[type = "database"]',
+          style: {
+            'border-color': '#7df4ff',
+            'background-color': '#171b26'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 1.5,
+            'line-color': '#3b494b',
+            'target-arrow-color': '#3b494b',
+            'target-arrow-shape': 'triangle',
+            'arrow-scale': 0.8,
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            'font-size': '9px',
+            'font-family': 'JetBrains Mono, monospace',
+            'color': '#849495',
+            'text-background-opacity': 0.8,
+            'text-background-color': '#0a0e18',
+            'text-background-padding': '2px',
+            'transition-property': 'line-color, target-arrow-color, width',
+            'transition-duration': '0.3s'
+          }
+        },
+        {
+          selector: '.threat-hop',
+          style: {
+            'line-color': '#ff506e',
+            'target-arrow-color': '#ff506e',
+            'width': 3.5,
+            'line-style': 'dashed',
+            'color': '#ff506e'
+          }
+        },
+        {
+          selector: '.threat-node',
+          style: {
+            'border-color': '#ff506e',
+            'background-color': '#5b0018',
+            'border-width': 3,
+            'color': '#ff506e'
+          }
+        }
+      ],
+      layout: { name: 'cose', animate: false }
+    });
+
+    let graphInitialized = false;
+
+    function resetGraphView() {
+      if (cy) {
+        cy.fit(undefined, 35);
+      }
+    }
+
+    function fitThreatPath() {
+      const threats = cy.elements('.threat-node, .threat-hop');
+      if (threats.length > 0) {
+        cy.fit(threats, 40);
+      } else {
+        cy.fit(undefined, 35);
+      }
+    }
+
+    async function pollState() {
+      try {
+        const res = await fetch('/v4/state');
+        if (!res.ok) return;
+        const state = await res.json();
+        updateUI(state);
+      } catch (e) {
+        console.error("Poll failed:", e);
+      }
+    }
+
+    function updateUI(state) {
+      if (!state || !state.summary) return;
+
+      // Counters
+      document.getElementById('cnt-total').innerText = state.summary.incidents_total || 0;
+      document.getElementById('cnt-pending').innerText = state.summary.pending_proposals_count || 0;
+      document.getElementById('cnt-contain').innerText = state.summary.applied_containments_count || 0;
+
+      // Model Status & Fallback Banner
+      const warningBanner = document.getElementById('banner-warning');
+      const modelLabel = document.getElementById('muse-model-label');
+      if (!state.summary.live_api_active) {
+        warningBanner.classList.remove('hidden');
+        modelLabel.innerText = 'OFFLINE RECORDED REPLAY';
+        modelLabel.classList.remove('text-primary-container');
+        modelLabel.classList.add('text-secondary');
+      } else {
+        warningBanner.classList.add('hidden');
+        modelLabel.innerText = 'LIVE (muse-spark-1.3)';
+        modelLabel.classList.remove('text-secondary');
+        modelLabel.classList.add('text-primary-container');
+      }
+
+      // Graph Initialization
+      if (!graphInitialized && state.graph) {
+        cy.add(state.graph.nodes);
+        cy.add(state.graph.edges);
+        cy.layout({
+          name: 'cose',
+          animate: false,
+          padding: 40,
+          nodeRepulsion: 450000,
+          idealEdgeLength: 80
+        }).run();
+        graphInitialized = true;
+      }
+
+      // Highlight Active Threat Path Hops
+      cy.elements().removeClass('threat-node').removeClass('threat-hop');
+      const statusBadge = document.getElementById('graph-status');
+      if (state.threat_path_active && state.threat_path_active.length > 0) {
+        statusBadge.innerText = 'ACTIVE THREAT PATH: ' + state.threat_path_active.join(' -> ');
+        statusBadge.className = 'px-2 py-1 bg-surface-container-lowest/80 border border-secondary-container font-mono-sm text-xs text-secondary pointer-events-auto font-bold';
+        state.threat_path_active.forEach(id => {
+          const n = cy.getElementById(id);
+          if (n) n.addClass('threat-node');
+        });
+        const e1 = cy.getElementById('e_bastion_win10');
+        const e2 = cy.getElementById('e_win10_dc');
+        if (e1) e1.addClass('threat-hop');
+        if (e2) e2.addClass('threat-hop');
+      } else {
+        statusBadge.innerText = 'LAB SCOPE SECURE';
+        statusBadge.className = 'px-2 py-1 bg-surface-container-lowest/80 border border-outline-variant font-mono-sm text-xs text-tertiary-container pointer-events-auto';
+      }
+
+      // Incidents Feed
+      const feedEl = document.getElementById('feed');
+      const feedCount = document.getElementById('feed-count');
+      if (state.incidents_feed && state.incidents_feed.length > 0) {
+        feedCount.innerText = `${state.incidents_feed.length} EVENTS`;
+        feedEl.innerHTML = state.incidents_feed.map(item => {
+          const isEscalate = item.route === 'system_2_escalate';
+          const badgeClass = isEscalate 
+            ? 'bg-surface-container-high text-[#d699ff] border border-[#9d4edd]/50' 
+            : 'bg-tertiary-container/10 text-tertiary border border-tertiary-container/40';
+          const badgeText = isEscalate ? 'SYSTEM-2 ESCALATION' : 'SYSTEM-1 AUTO-ACT (DRY-RUN)';
+          const borderClass = item.verdict === 'malicious' ? 'border-l-2 border-secondary-container' : 'border-l-2 border-tertiary-container';
+          
+          return `
+            <div class="p-2 bg-surface-container border border-outline-variant/60 ${borderClass} flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-on-surface text-xs">${item.event_type}</span>
+                <span class="text-[9px] px-1.5 py-0.2 ${badgeClass} font-bold">${badgeText}</span>
+              </div>
+              <div class="text-[11px] text-outline flex items-center justify-between">
+                <span>${item.source} &rarr; ${item.target || 'LOCAL'}</span>
+                <span class="text-on-surface font-semibold">${(item.confidence * 100).toFixed(1)}% Conf</span>
+              </div>
+              <div class="text-[10px] text-on-surface-variant truncate">
+                Verdict: <span class="uppercase font-bold text-on-surface">${item.verdict}</span> | ${item.reason}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Muse Reasoning Box (display last escalated incident explanation)
+      const lastEscalated = state.incidents_feed.find(i => i.muse_explanation);
+      if (lastEscalated) {
+        document.getElementById('muse-box').innerHTML = `
+          <div class="flex items-center justify-between border-b border-outline-variant/60 pb-1 mb-1">
+            <span class="text-primary-container font-bold text-xs">Incident ${lastEscalated.id}: Forensic Analysis</span>
+            <span class="text-[10px] text-outline font-label-caps">${lastEscalated.is_recorded ? 'OFFLINE FIXTURE' : 'LIVE MUSE SPARK 1.3'}</span>
+          </div>
+          <p class="text-on-surface text-[11px] mb-2">${lastEscalated.muse_explanation}</p>
+          <div class="p-1.5 bg-surface-container-lowest border border-outline-variant">
+            <span class="text-outline text-[10px] font-label-caps block mb-0.5">CONTAINMENT RECOMMENDATION:</span>
+            <span class="text-[#ffcc00] font-mono text-[11px] font-bold">${lastEscalated.containment_recommendation}</span>
+          </div>
+        `;
+      }
+
+      // HITL Queue
+      const hitlEl = document.getElementById('hitl-queue');
+      if (state.pending_proposals && state.pending_proposals.length > 0) {
+        hitlEl.innerHTML = state.pending_proposals.map(p => {
+          const matchingInc = state.incidents_feed.find(i => i.proposal_id === p.proposal_id);
+          const token = matchingInc ? matchingInc.approval_token : (p.token_hash || 'AUTH_REQ').substring(0, 8);
+          return `
+            <div class="p-2.5 bg-surface-container border-l-2 border-secondary-container border border-outline-variant flex flex-col gap-1.5 font-mono-sm">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-secondary font-bold">${p.action.toUpperCase()} ${p.target}</span>
+                <span class="px-1.5 py-0.5 bg-surface-container-high border border-outline-variant text-[#ffcc00] font-bold text-[10px]">
+                  TOKEN: ${token}
+                </span>
+              </div>
+              <p class="text-on-surface-variant text-[11px] leading-tight">
+                Reason: ${p.reason} (Expires in ${Math.max(0, Math.floor(p.expires_at - (Date.now()/1000)))}s)
+              </p>
+              <div class="flex items-center gap-2 pt-1">
+                <button onclick="approveToken('${token}')" class="flex-1 py-1 bg-tertiary-container hover:bg-tertiary text-on-tertiary font-bold text-xs uppercase transition-colors">
+                  APPROVE CONTAINMENT
+                </button>
+                <button onclick="rejectToken('${token}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-error-container text-on-surface hover:text-on-error border border-outline-variant text-xs transition-colors">
+                  REJECT
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        hitlEl.innerHTML = '<div class="p-3 bg-surface-container border border-outline-variant text-outline text-center text-xs">No pending containment authorizations.</div>';
+      }
+    }
+
+    async function runScenario(id) {
+      await fetch('/v4/scenario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenario_id: id })
+      });
+      setTimeout(pollState, 350);
+    }
+
+    async function triggerPersona(name) {
+      await fetch('/v4/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona: name })
+      });
+      setTimeout(pollState, 350);
+    }
+
+    async function approveToken(tok) {
+      await fetch('/v4/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tok })
+      });
+      pollState();
+    }
+
+    async function rejectToken(tok) {
+      await fetch('/v4/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tok })
+      });
+      pollState();
+    }
+
+    async function resetEpisode() {
+      await fetch('/v4/reset', { method: 'POST' });
+      pollState();
+    }
+
+    // Start state polling every 1.5s
+    setInterval(pollState, 1500);
+    pollState();
+  </script>
+</body>
+</html>
