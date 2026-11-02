@@ -1,0 +1,13 @@
+{
+  "scenario_id": "scenario_2",
+  "signature_tags": ["c2-beacon-dns-tunnel", "c2-beacon", "dns-tunnel", "data-egress"],
+  "explanation": "Threat Path Analysis: Host lab-win10-03 is exhibiting periodic 60-second C2 beaconing to 10.10.10.88:8443 matching known Cobalt Strike JA3 signatures. Meanwhile, lab-db-01 (10.10.10.21) generated 3,900 high-entropy DNS TXT queries (4.6 bits) to *.data.example-cdn.net. Telemetry indicates bulk staging from lab-file-01 to internal lab sink 10.10.10.99.",
+  "containment_recommendation": "Propose egress network block for destination 10.10.10.88:8443 and endpoint isolation for beaconing host lab-win10-03 with dry_run=True, reversible=True, ttl_seconds=3600. Reject blanket subnet shutdown to maintain database uptime. Request HITL authorization before applying.",
+  "remediation_draft": "1. Deploy DNS RPZ firewall rule blocking *.data.example-cdn.net. 2. Implement egress proxy allow-listing on port 8443. 3. Audit database access tokens on lab-db-01.",
+  "confidence": 0.91,
+  "proposal": {
+    "target": "10.10.10.88:8443",
+    "action": "block_ip",
+    "reason": "Active Cobalt Strike command-and-control beacon destination"
+  }
+}

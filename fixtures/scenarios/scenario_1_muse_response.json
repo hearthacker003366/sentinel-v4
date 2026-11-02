@@ -1,0 +1,13 @@
+{
+  "scenario_id": "scenario_1",
+  "signature_tags": ["lateral-smb-powershell", "brute-force", "lateral-move"],
+  "explanation": "Threat Path Analysis: Adversary initiated credential stuffing on bastion 192.168.56.20, achieved initial foothold on host lab-win10-03 (192.168.56.31), and established an internal SMB named-pipe session to domain controller lab-dc-01 (192.168.56.10). An obfuscated base64 PowerShell child process was spawned 40s later to dump credentials.",
+  "containment_recommendation": "Propose isolation of compromised workstation lab-win10-03 (192.168.56.31) with dry_run=True, reversible=True, ttl_seconds=3600. Do NOT isolate lab-dc-01 to avoid catastrophic domain outage. Request HITL authorization before applying.",
+  "remediation_draft": "1. Reset compromised 'admin' domain credentials. 2. Enforce SMB signing across 192.168.56.0/24. 3. Deploy Sigma detection rule for brute-force followed by internal SMB within 5 minutes.",
+  "confidence": 0.94,
+  "proposal": {
+    "target": "lab-win10-03",
+    "action": "isolate_host",
+    "reason": "Compromised workstation actively pivoting to domain controller"
+  }
+}
