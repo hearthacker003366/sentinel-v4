@@ -207,12 +207,20 @@ class V4DashboardHandler(BaseHTTPRequestHandler):
         }
 
 
-def run_dashboard_server(host: str = "127.0.0.1", port: int = 8515) -> ThreadingHTTPServer:
+def run_dashboard_server(host: str = "127.0.0.1", port: int = 8516) -> ThreadingHTTPServer:
     global ENGINE
     if ENGINE is None:
         ENGINE = ChiefSentinelEngine()
 
-    server = ThreadingHTTPServer((host, port), V4DashboardHandler)
+    try:
+        server = ThreadingHTTPServer((host, port), V4DashboardHandler)
+    except OSError as e:
+        # Fall back gracefully if 8515 or 8516 is occupied by VirtualBox VM
+        fallback_port = 8585 if port == 8516 else 8516
+        logger.warning("Port %d in use, falling back to %d (%s)", port, fallback_port, e)
+        server = ThreadingHTTPServer((host, fallback_port), V4DashboardHandler)
+        port = fallback_port
+
     logger.info("Sentinel V4 Dashboard Server live at http://%s:%d", host, port)
     return server
 
@@ -220,7 +228,7 @@ def run_dashboard_server(host: str = "127.0.0.1", port: int = 8515) -> Threading
 def main():
     parser = argparse.ArgumentParser(description="Sentinel V4 Dashboard Server")
     parser.add_argument("--host", default="127.0.0.1", help="Host address")
-    parser.add_argument("--port", type=int, default=8515, help="Port (default: 8515)")
+    parser.add_argument("--port", type=int, default=8516, help="Port (default: 8516)")
     args = parser.parse_args()
 
     server = run_dashboard_server(host=args.host, port=args.port)
