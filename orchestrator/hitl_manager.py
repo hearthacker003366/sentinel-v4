@@ -60,7 +60,7 @@ class HITLManager:
         self._init_db()
 
     def _get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path, timeout=10.0)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute("PRAGMA synchronous=NORMAL;")
         return conn
@@ -167,14 +167,14 @@ class HITLManager:
         reason: str,
         ttl_seconds: int = DEFAULT_TOKEN_TTL
     ) -> tuple[str, str]:
-        """Creates a proposal, stamps config TTL, generates single-use 8-char token.
+        """Creates a proposal, stamps config TTL, generates single-use 16-char token.
 
         Returns (proposal_id, raw_token). The raw token is returned ONCE for
         dispatch to Telegram/Console and is NEVER saved in the database.
         """
         now = time.time()
         proposal_id = f"prop-{secrets.token_hex(4)}"
-        raw_token = secrets.token_hex(4)  # 8-character hex
+        raw_token = secrets.token_hex(8)  # 16-character hex (64 bits of entropy)
         token_hash = self.hash_token(raw_token)
         expires_at = now + ttl_seconds
 

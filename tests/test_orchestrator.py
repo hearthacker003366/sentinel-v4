@@ -39,7 +39,7 @@ def test_orchestrator_scenario_1_pipeline(engine):
     assert inc_lm.routing.route == Route.SYSTEM_2_ESCALATE
     assert inc_lm.muse_reasoning is not None
     assert inc_lm.approval_token is not None
-    assert len(inc_lm.approval_token) == 8
+    assert len(inc_lm.approval_token) == 16  # 16-char hex from token_hex(8)
 
     # Approve via HITL gate
     record = engine.approve_containment(inc_lm.approval_token, actor="test_operator")
@@ -47,6 +47,7 @@ def test_orchestrator_scenario_1_pipeline(engine):
     assert record.target == "lab-win10-03"
     assert len(engine.applied_containments) == 1
     assert engine.applied_containments[0]["target"] == "lab-win10-03"
+    assert engine.applied_containments[0]["dry_run"] is True  # V4 executes dry-run only
 
 
 def test_orchestrator_scenario_3_benign_suppression(engine):
@@ -65,3 +66,20 @@ def test_orchestrator_dashboard_state(engine):
     assert "applied_containments" in state
     assert "model_status" in state
     assert "45ms" in state["model_status"]["system_1"]
+
+
+def test_orchestrator_lateral_event_verdict_comes_from_gate(engine):
+    """Fix 5: Verify lateral event is triaged through LayaGate."""
+    lateral_event = {
+        "event_type": "smb_session_open",
+        "source_ip": "192.168.56.31",
+        "target_ip": "192.168.56.10",
+        "signature_tag": "lateral-smb",
+        "host": "lab-win10-03"
+    }
+    verdict = engine.triage_event_system1(lateral_event)
+    assert verdict is not None
+    assert verdict.raw is not None
+    assert "source" in verdict.raw
+    assert verdict.raw["source"] in ("laya_gate", "fallback_heuristic")
+

@@ -5,16 +5,12 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>SENTINEL V4 // AUTONOMOUS AI SOC COMMAND</title>
   
-  <!-- Material Symbols Outlined -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <!-- Vendored Local Material Symbols & Design System Fonts (Zero External Requests) -->
+  <link href="/vendor/material-symbols.css" rel="stylesheet"/>
+  <link href="/vendor/fonts.css" rel="stylesheet"/>
   
-  <!-- Design System Fonts: Space Grotesk & JetBrains Mono -->
-  <link href="https://fonts.googleapis.com" rel="preconnect"/>
-  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  
-  <!-- Tailwind CSS with Stitch Custom Theme -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Vendored Tailwind CSS with Stitch Custom Theme -->
+  <script src="/vendor/tailwind.js"></script>
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
@@ -86,8 +82,8 @@
     };
   </script>
 
-  <!-- Cytoscape Graph Engine -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  <!-- Vendored Cytoscape Graph Engine -->
+  <script src="/vendor/cytoscape.min.js"></script>
 
   <style>
     .material-symbols-outlined {
@@ -258,12 +254,12 @@
       <div class="h-3 w-px bg-outline-variant"></div>
       <div class="flex items-center gap-1.5">
         <span class="text-outline">AUTO-ACT:</span>
-        <span class="font-bold text-tertiary-container">83.2% (DRY-RUN)</span>
+        <span class="font-bold text-tertiary-container">83.17% (DRY-RUN)</span>
       </div>
       <div class="h-3 w-px bg-outline-variant"></div>
       <div class="flex items-center gap-1.5">
         <span class="text-outline">ESCALATE:</span>
-        <span class="font-bold text-[#b57edc]">16.8%</span>
+        <span class="font-bold text-[#b57edc]">16.83%</span>
       </div>
       <div class="h-3 w-px bg-outline-variant"></div>
       <div class="flex items-center gap-1.5">
@@ -447,11 +443,11 @@
         </div>
       </div>
 
-      <!-- 2. HITL Containment Authorization Queue -->
+      <!-- 2. HITL Containment Authorization Queue (Read-Only) -->
       <div class="p-3 border-b border-outline-variant flex flex-col gap-2.5">
         <div class="flex items-center justify-between text-outline font-label-caps text-[10px]">
-          <span>HITL CONTAINMENT APPROVAL QUEUE</span>
-          <span class="text-[#ffcc00] font-bold">CONSOLE: APPROVE &lt;TOKEN&gt;</span>
+          <span>HITL CONTAINMENT QUEUE</span>
+          <span class="text-[#ffcc00] font-bold">CONSOLE DOOR: APPROVE &lt;TOKEN&gt;</span>
         </div>
         <div id="hitl-queue" class="flex flex-col gap-2.5">
           <div class="p-3 bg-surface-container border border-outline-variant text-outline text-center text-xs">
@@ -516,13 +512,13 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- JAVASCRIPT STATE ENGINE & POLLING CONTROLLER                              -->
+  <!-- JAVASCRIPT STATE ENGINE (NO INNERHTML — SAFE DOM CREATION)                 -->
   <!-- ========================================================================= -->
   <script>
     // Live Clock
     setInterval(() => {
       const now = new Date();
-      document.getElementById('clock').innerText = now.toISOString().substring(11, 19) + ' UTC';
+      document.getElementById('clock').textContent = now.toISOString().substring(11, 19) + ' UTC';
     }, 1000);
 
     // Initialize Cytoscape Tactical Network Graph
@@ -561,7 +557,7 @@
           }
         },
         {
-          selector: 'node[type = "honeypot"]',
+          selector: 'node[type = "sink"]',
           style: {
             'border-color': '#00f985',
             'background-color': '#00210c',
@@ -657,22 +653,22 @@
     function updateUI(state) {
       if (!state || !state.summary) return;
 
-      // Counters
-      document.getElementById('cnt-total').innerText = state.summary.incidents_total || 0;
-      document.getElementById('cnt-pending').innerText = state.summary.pending_proposals_count || 0;
-      document.getElementById('cnt-contain').innerText = state.summary.applied_containments_count || 0;
+      // Counters (Fix 2: textContent only)
+      document.getElementById('cnt-total').textContent = state.summary.incidents_total || 0;
+      document.getElementById('cnt-pending').textContent = state.summary.pending_proposals_count || 0;
+      document.getElementById('cnt-contain').textContent = state.summary.applied_containments_count || 0;
 
       // Model Status & Fallback Banner
       const warningBanner = document.getElementById('banner-warning');
       const modelLabel = document.getElementById('muse-model-label');
       if (!state.summary.live_api_active) {
         warningBanner.classList.remove('hidden');
-        modelLabel.innerText = 'OFFLINE RECORDED REPLAY';
+        modelLabel.textContent = 'OFFLINE RECORDED REPLAY';
         modelLabel.classList.remove('text-primary-container');
         modelLabel.classList.add('text-secondary');
       } else {
         warningBanner.classList.add('hidden');
-        modelLabel.innerText = 'LIVE (muse-spark-1.3)';
+        modelLabel.textContent = 'LIVE (muse-spark-1.3)';
         modelLabel.classList.remove('text-secondary');
         modelLabel.classList.add('text-primary-container');
       }
@@ -695,7 +691,7 @@
       cy.elements().removeClass('threat-node').removeClass('threat-hop');
       const statusBadge = document.getElementById('graph-status');
       if (state.threat_path_active && state.threat_path_active.length > 0) {
-        statusBadge.innerText = 'ACTIVE THREAT PATH: ' + state.threat_path_active.join(' -> ');
+        statusBadge.textContent = 'ACTIVE THREAT PATH: ' + state.threat_path_active.join(' -> ');
         statusBadge.className = 'px-2 py-1 bg-surface-container-lowest/80 border border-secondary-container font-mono-sm text-xs text-secondary pointer-events-auto font-bold';
         state.threat_path_active.forEach(id => {
           const n = cy.getElementById(id);
@@ -706,87 +702,162 @@
         if (e1) e1.addClass('threat-hop');
         if (e2) e2.addClass('threat-hop');
       } else {
-        statusBadge.innerText = 'LAB SCOPE SECURE';
+        statusBadge.textContent = 'LAB SCOPE SECURE';
         statusBadge.className = 'px-2 py-1 bg-surface-container-lowest/80 border border-outline-variant font-mono-sm text-xs text-tertiary-container pointer-events-auto';
       }
 
-      // Incidents Feed
+      // Fix 2: Incidents Feed constructed strictly with DOM text nodes
       const feedEl = document.getElementById('feed');
       const feedCount = document.getElementById('feed-count');
       if (state.incidents_feed && state.incidents_feed.length > 0) {
-        feedCount.innerText = `${state.incidents_feed.length} EVENTS`;
-        feedEl.innerHTML = state.incidents_feed.map(item => {
+        feedCount.textContent = `${state.incidents_feed.length} EVENTS`;
+        const fragment = document.createDocumentFragment();
+
+        state.incidents_feed.forEach(item => {
           const isEscalate = item.route === 'system_2_escalate';
-          const badgeClass = isEscalate 
-            ? 'bg-surface-container-high text-[#d699ff] border border-[#9d4edd]/50' 
-            : 'bg-tertiary-container/10 text-tertiary border border-tertiary-container/40';
-          const badgeText = isEscalate ? 'SYSTEM-2 ESCALATION' : 'SYSTEM-1 AUTO-ACT (DRY-RUN)';
+          const card = document.createElement('div');
           const borderClass = item.verdict === 'malicious' ? 'border-l-2 border-secondary-container' : 'border-l-2 border-tertiary-container';
-          
-          return `
-            <div class="p-2 bg-surface-container border border-outline-variant/60 ${borderClass} flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-on-surface text-xs">${item.event_type}</span>
-                <span class="text-[9px] px-1.5 py-0.2 ${badgeClass} font-bold">${badgeText}</span>
-              </div>
-              <div class="text-[11px] text-outline flex items-center justify-between">
-                <span>${item.source} &rarr; ${item.target || 'LOCAL'}</span>
-                <span class="text-on-surface font-semibold">${(item.confidence * 100).toFixed(1)}% Conf</span>
-              </div>
-              <div class="text-[10px] text-on-surface-variant truncate">
-                Verdict: <span class="uppercase font-bold text-on-surface">${item.verdict}</span> | ${item.reason}
-              </div>
-            </div>
-          `;
-        }).join('');
+          card.className = `p-2 bg-surface-container border border-outline-variant/60 ${borderClass} flex flex-col gap-1`;
+
+          // Row 1: Event type + route badge
+          const row1 = document.createElement('div');
+          row1.className = 'flex items-center justify-between';
+
+          const evTypeSpan = document.createElement('span');
+          evTypeSpan.className = 'font-bold text-on-surface text-xs';
+          evTypeSpan.textContent = String(item.event_type || 'unknown_event');
+          row1.appendChild(evTypeSpan);
+
+          const badgeSpan = document.createElement('span');
+          badgeSpan.className = isEscalate
+            ? 'text-[9px] px-1.5 py-0.2 bg-surface-container-high text-[#d699ff] border border-[#9d4edd]/50 font-bold'
+            : 'text-[9px] px-1.5 py-0.2 bg-tertiary-container/10 text-tertiary border border-tertiary-container/40 font-bold';
+          badgeSpan.textContent = isEscalate ? 'SYSTEM-2 ESCALATION' : 'SYSTEM-1 AUTO-ACT (DRY-RUN)';
+          row1.appendChild(badgeSpan);
+          card.appendChild(row1);
+
+          // Row 2: Source -> Target + confidence
+          const row2 = document.createElement('div');
+          row2.className = 'text-[11px] text-outline flex items-center justify-between';
+
+          const pathSpan = document.createElement('span');
+          pathSpan.textContent = `${item.source || 'LOCAL'} \u2192 ${item.target || 'LOCAL'}`;
+          row2.appendChild(pathSpan);
+
+          const confSpan = document.createElement('span');
+          confSpan.className = 'text-on-surface font-semibold';
+          confSpan.textContent = `${(Number(item.confidence || 0) * 100).toFixed(1)}% Conf`;
+          row2.appendChild(confSpan);
+          card.appendChild(row2);
+
+          // Row 3: Verdict + Reason
+          const row3 = document.createElement('div');
+          row3.className = 'text-[10px] text-on-surface-variant truncate';
+          row3.textContent = `Verdict: ${String(item.verdict || '').toUpperCase()} | ${String(item.reason || '')}`;
+          card.appendChild(row3);
+
+          fragment.appendChild(card);
+        });
+
+        feedEl.replaceChildren(fragment);
       }
 
-      // Muse Reasoning Box (display last escalated incident explanation)
-      const lastEscalated = state.incidents_feed.find(i => i.muse_explanation);
+      // Fix 2: Muse Reasoning Box constructed strictly with DOM elements
+      const museBox = document.getElementById('muse-box');
+      const lastEscalated = (state.incidents_feed || []).find(i => i.muse_explanation);
       if (lastEscalated) {
-        document.getElementById('muse-box').innerHTML = `
-          <div class="flex items-center justify-between border-b border-outline-variant/60 pb-1 mb-1">
-            <span class="text-primary-container font-bold text-xs">Incident ${lastEscalated.id}: Forensic Analysis</span>
-            <span class="text-[10px] text-outline font-label-caps">${lastEscalated.is_recorded ? 'OFFLINE FIXTURE' : 'LIVE MUSE SPARK 1.3'}</span>
-          </div>
-          <p class="text-on-surface text-[11px] mb-2">${lastEscalated.muse_explanation}</p>
-          <div class="p-1.5 bg-surface-container-lowest border border-outline-variant">
-            <span class="text-outline text-[10px] font-label-caps block mb-0.5">CONTAINMENT RECOMMENDATION:</span>
-            <span class="text-[#ffcc00] font-mono text-[11px] font-bold">${lastEscalated.containment_recommendation}</span>
-          </div>
-        `;
+        const frag = document.createDocumentFragment();
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'flex items-center justify-between border-b border-outline-variant/60 pb-1 mb-1';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'text-primary-container font-bold text-xs';
+        titleSpan.textContent = `Incident ${lastEscalated.id}: Forensic Analysis`;
+        headerDiv.appendChild(titleSpan);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'text-[10px] text-outline font-label-caps';
+        statusSpan.textContent = lastEscalated.is_recorded ? 'OFFLINE FIXTURE' : 'LIVE MUSE SPARK 1.3';
+        headerDiv.appendChild(statusSpan);
+        frag.appendChild(headerDiv);
+
+        const expP = document.createElement('p');
+        expP.className = 'text-on-surface text-[11px] mb-2';
+        expP.textContent = String(lastEscalated.muse_explanation || '');
+        frag.appendChild(expP);
+
+        const recDiv = document.createElement('div');
+        recDiv.className = 'p-1.5 bg-surface-container-lowest border border-outline-variant';
+
+        const recLabel = document.createElement('span');
+        recLabel.className = 'text-outline text-[10px] font-label-caps block mb-0.5';
+        recLabel.textContent = 'CONTAINMENT RECOMMENDATION:';
+        recDiv.appendChild(recLabel);
+
+        const recVal = document.createElement('span');
+        recVal.className = 'text-[#ffcc00] font-mono text-[11px] font-bold';
+        recVal.textContent = String(lastEscalated.containment_recommendation || '');
+        recDiv.appendChild(recVal);
+        frag.appendChild(recDiv);
+
+        museBox.replaceChildren(frag);
       }
 
-      // HITL Queue
+      // Fix 2 & Fix 3: HITL Queue (Read-Only: shows Fingerprint + Proposal ID only; zero innerHTML)
       const hitlEl = document.getElementById('hitl-queue');
       if (state.pending_proposals && state.pending_proposals.length > 0) {
-        hitlEl.innerHTML = state.pending_proposals.map(p => {
-          const matchingInc = state.incidents_feed.find(i => i.proposal_id === p.proposal_id);
-          const token = matchingInc ? matchingInc.approval_token : (p.token_hash || 'AUTH_REQ').substring(0, 8);
-          return `
-            <div class="p-2.5 bg-surface-container border-l-2 border-secondary-container border border-outline-variant flex flex-col gap-1.5 font-mono-sm">
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-secondary font-bold">${p.action.toUpperCase()} ${p.target}</span>
-                <span class="px-1.5 py-0.5 bg-surface-container-high border border-outline-variant text-[#ffcc00] font-bold text-[10px]">
-                  TOKEN: ${token}
-                </span>
-              </div>
-              <p class="text-on-surface-variant text-[11px] leading-tight">
-                Reason: ${p.reason} (Expires in ${Math.max(0, Math.floor(p.expires_at - (Date.now()/1000)))}s)
-              </p>
-              <div class="flex items-center gap-2 pt-1">
-                <button onclick="approveToken('${token}')" class="flex-1 py-1 bg-tertiary-container hover:bg-tertiary text-on-tertiary font-bold text-xs uppercase transition-colors">
-                  APPROVE CONTAINMENT
-                </button>
-                <button onclick="rejectToken('${token}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-error-container text-on-surface hover:text-on-error border border-outline-variant text-xs transition-colors">
-                  REJECT
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('');
+        const frag = document.createDocumentFragment();
+
+        state.pending_proposals.forEach(p => {
+          const matchingInc = (state.incidents_feed || []).find(i => i.proposal_id === p.proposal_id);
+          const fingerprint = (matchingInc && matchingInc.token_fingerprint) || (p.token_hash ? p.token_hash.substring(0, 8) : 'PENDING');
+
+          const card = document.createElement('div');
+          card.className = 'p-2.5 bg-surface-container border-l-2 border-secondary-container border border-outline-variant flex flex-col gap-1.5 font-mono-sm';
+
+          const topRow = document.createElement('div');
+          topRow.className = 'flex items-center justify-between text-xs';
+
+          const actionSpan = document.createElement('span');
+          actionSpan.className = 'text-secondary font-bold';
+          actionSpan.textContent = `${String(p.action || '').toUpperCase()} ${String(p.target || '')}`;
+          topRow.appendChild(actionSpan);
+
+          const fpSpan = document.createElement('span');
+          fpSpan.className = 'px-1.5 py-0.5 bg-surface-container-high border border-outline-variant text-[#ffcc00] font-bold text-[10px]';
+          fpSpan.textContent = `FINGERPRINT: ${fingerprint}`;
+          topRow.appendChild(fpSpan);
+          card.appendChild(topRow);
+
+          const reasonP = document.createElement('p');
+          reasonP.className = 'text-on-surface-variant text-[11px] leading-tight';
+          const remainingS = Math.max(0, Math.floor((p.expires_at || 0) - (Date.now() / 1000)));
+          reasonP.textContent = `Reason: ${String(p.reason || '')} (Expires in ${remainingS}s)`;
+          card.appendChild(reasonP);
+
+          const noticeRow = document.createElement('div');
+          noticeRow.className = 'pt-1 text-[10px] text-outline font-label-caps border-t border-outline-variant/60 flex items-center justify-between';
+
+          const statusSpan = document.createElement('span');
+          statusSpan.className = 'text-tertiary-container font-semibold';
+          statusSpan.textContent = '[PENDING OPERATOR AUTH]';
+          noticeRow.appendChild(statusSpan);
+
+          const doorSpan = document.createElement('span');
+          doorSpan.textContent = 'TELEGRAM / CONSOLE DOOR';
+          noticeRow.appendChild(doorSpan);
+          card.appendChild(noticeRow);
+
+          frag.appendChild(card);
+        });
+
+        hitlEl.replaceChildren(frag);
       } else {
-        hitlEl.innerHTML = '<div class="p-3 bg-surface-container border border-outline-variant text-outline text-center text-xs">No pending containment authorizations.</div>';
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'p-3 bg-surface-container border border-outline-variant text-outline text-center text-xs';
+        emptyDiv.textContent = 'No pending containment authorizations.';
+        hitlEl.replaceChildren(emptyDiv);
       }
     }
 
@@ -806,24 +877,6 @@
         body: JSON.stringify({ persona: name })
       });
       setTimeout(pollState, 350);
-    }
-
-    async function approveToken(tok) {
-      await fetch('/v4/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tok })
-      });
-      pollState();
-    }
-
-    async function rejectToken(tok) {
-      await fetch('/v4/reject', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tok })
-      });
-      pollState();
     }
 
     async function resetEpisode() {

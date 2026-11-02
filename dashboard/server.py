@@ -9,6 +9,7 @@ and interactive HITL containment card approval.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -44,9 +45,9 @@ LAB_TOPOLOGY = {
         {"data": {"id": "lab-file-01", "label": "lab-file-01", "type": "fileserver", "ip": "10.10.10.32"}},
         {"data": {"id": "lab-db-01", "label": "lab-db-01 (SQL)", "type": "database", "ip": "10.10.10.21"}},
         {"data": {"id": "10.10.10.88", "label": "egress-proxy", "type": "proxy", "ip": "10.10.10.88"}},
-        {"data": {"id": "10.10.10.99", "label": "lab-sink-99", "type": "honeypot", "ip": "10.10.10.99"}},
+        {"data": {"id": "10.10.10.99", "label": "lab-sink-99", "type": "sink", "ip": "10.10.10.99"}},
         {"data": {"id": "lab-kali-01", "label": "lab-kali-01", "type": "scanner", "ip": "10.10.10.50"}},
-        {"data": {"id": "web-01", "label": "web-01 (Trap)", "type": "honeypot", "ip": "192.168.56.40"}},
+        {"data": {"id": "web-01", "label": "web-01", "type": "sink", "ip": "192.168.56.40"}},
     ],
     "edges": [
         {"data": {"id": "e_bastion_win10", "source": "192.168.56.20", "target": "lab-win10-03", "label": "SSH"}},
@@ -86,6 +87,31 @@ class V4DashboardHandler(BaseHTTPRequestHandler):
         elif self.path in ("/v4/state", "/api/state"):
             self._json(self._get_full_state())
 
+        elif self.path.startswith("/vendor/"):
+            rel_path = self.path[len("/vendor/"):].split("?")[0]
+            clean_rel = os.path.normpath(rel_path)
+            if clean_rel.startswith("..") or os.path.isabs(clean_rel):
+                self._send(403, b"Forbidden", ctype="text/plain")
+                return
+            target_file = os.path.join(HERE, "vendor", clean_rel)
+            if not os.path.isfile(target_file):
+                self._send(404, b"Vendor file not found", ctype="text/plain")
+                return
+            ctype = "application/octet-stream"
+            if target_file.endswith(".js"):
+                ctype = "application/javascript"
+            elif target_file.endswith(".css"):
+                ctype = "text/css"
+            elif target_file.endswith(".woff2"):
+                ctype = "font/woff2"
+            elif target_file.endswith(".woff"):
+                ctype = "font/woff"
+            elif target_file.endswith(".ttf"):
+                ctype = "font/ttf"
+            with open(target_file, "rb") as f:
+                content = f.read()
+            self._send(200, content, ctype=ctype)
+
         else:
             self._json({"error": "not found"}, code=404)
 
@@ -105,33 +131,6 @@ class V4DashboardHandler(BaseHTTPRequestHandler):
             persona = str(body.get("persona", "brute_force"))
             threading.Thread(target=self._run_persona_async, args=(persona,), daemon=True).start()
             self._json({"status": "running", "persona": persona})
-
-        elif self.path in ("/v4/approve", "/api/approve"):
-            token = str(body.get("token", "")).strip()
-            if not token:
-                self._json({"error": "Missing approval token"}, code=400)
-                return
-            try:
-                rec = ENGINE.approve_containment(token, actor="dashboard_operator")
-                self._json({
-                    "status": "approved",
-                    "proposal_id": rec.proposal_id,
-                    "target": rec.target,
-                    "action": rec.action,
-                })
-            except (TokenAlreadyConsumed, TokenExpired, GateLockedOut, ValueError) as e:
-                self._json({"error": str(e)}, code=400)
-
-        elif self.path in ("/v4/reject", "/api/reject"):
-            token = str(body.get("token", "")).strip()
-            if not token:
-                self._json({"error": "Missing token"}, code=400)
-                return
-            try:
-                rec = ENGINE.reject_containment(token, actor="dashboard_operator")
-                self._json({"status": "rejected", "proposal_id": rec.proposal_id})
-            except Exception as e:
-                self._json({"error": str(e)}, code=400)
 
         elif self.path in ("/v4/reset", "/api/reset"):
             ENGINE.incidents.clear()
@@ -180,7 +179,8 @@ class V4DashboardHandler(BaseHTTPRequestHandler):
                 item["fallback_banner"] = inc.muse_reasoning.fallback_banner
 
             if inc.approval_token:
-                item["approval_token"] = inc.approval_token
+                # Dashboard is read-only: token fingerprint (hash prefix) only, never the raw token
+                item["token_fingerprint"] = hashlib.sha256(inc.approval_token.encode("utf-8")).hexdigest()[:8]
                 item["proposal_id"] = inc.proposal_id
 
             feed.append(item)
@@ -194,7 +194,7 @@ class V4DashboardHandler(BaseHTTPRequestHandler):
                 "incidents_total": engine_state["incidents_total"],
                 "pending_proposals_count": len(engine_state["pending_proposals"]),
                 "applied_containments_count": len(engine_state["applied_containments"]),
-                "auto_act_rate": "83.2%",
+                "auto_act_rate": "83.17%",
                 "laya_latency": "45ms Mean",
                 "muse_status": "LIVE (muse-spark-1.3)" if ENGINE.muse.is_live else "FALLBACK (Recorded Fixtures)",
                 "live_api_active": ENGINE.muse.is_live,

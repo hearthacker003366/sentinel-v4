@@ -7,6 +7,7 @@ Guarantees that all System-1 auto-actions are strictly dry-run ONLY.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -47,9 +48,30 @@ def evaluate_routing_gate(triage: TriageVerdict, event_context: dict[str, Any] =
 
     - winner_confidence >= 0.8500 -> System-1 auto-act (dry_run=True ONLY).
     - winner_confidence < 0.8500 -> System-2 escalation to Meta Muse Spark.
+    - Non-finite confidence (inf, -inf, nan) -> System-2 escalation + flag.
     """
-    conf = round(float(triage.winner_confidence), 4)
     target = (event_context or {}).get("source_ip") or (event_context or {}).get("host")
+
+    try:
+        raw_conf = float(triage.winner_confidence)
+    except (TypeError, ValueError):
+        raw_conf = float("nan")
+
+    # Security (§1.6): Non-finite confidence (inf, -inf, nan) MUST escalate, never auto-act
+    if not math.isfinite(raw_conf):
+        return RoutingDecision(
+            route=Route.SYSTEM_2_ESCALATE,
+            winner_confidence=0.0,
+            verdict=triage.verdict,
+            is_attack=triage.is_attack,
+            severity=triage.severity,
+            dry_run=True,
+            reason="Non-finite confidence detected (inf/nan). Escalating to System-2 as security safeguard.",
+            action_type="escalate_muse_spark",
+            target=target,
+        )
+
+    conf = round(raw_conf, 4)
 
     if conf >= GATE_THRESHOLD:
         # High confidence -> System-1 handles autonomously (dry-run ONLY)

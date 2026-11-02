@@ -47,3 +47,23 @@ def test_non_finite_confidence_must_escalate():
     d_garbage = gate._wrap("choice", {"choice": "malicious", "confidence": "broken_payload"})
     assert d_garbage.escalate is True
     assert d_garbage.confidence == 0.0
+
+
+def test_lateral_event_verdict_comes_from_laya_gate():
+    """Fix 5: Test proving a lateral event's verdict is produced by LayaGate."""
+    gate = LayaGate()
+    lateral_event = {
+        "event_type": "smb_session_open",
+        "source_ip": "192.168.56.31",
+        "target_ip": "192.168.56.10",
+        "signature_tag": "lateral-smb",
+        "host": "lab-win10-03"
+    }
+    res = gate.triage_event(lateral_event)
+    assert res is not None
+    assert "verdict" in res
+    assert "winner_confidence" in res
+    assert "source" in res
+    assert res["source"] in ("laya_gate", "fallback_heuristic")
+    assert math.isfinite(res["winner_confidence"])
+

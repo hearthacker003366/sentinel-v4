@@ -55,3 +55,20 @@ def test_system1_benign_suppression():
     assert dec.route == Route.SYSTEM_1_AUTO_ACT
     assert dec.action_type == "log_benign"
     assert dec.dry_run is True
+
+
+def test_routing_gate_non_finite_must_escalate():
+    """Security (§1.6): inf and nan confidence MUST escalate, never auto-act."""
+    import math
+    for bad_conf in [float("inf"), float("-inf"), float("nan")]:
+        t = TriageVerdict(
+            verdict="malicious",
+            winner_confidence=bad_conf,
+            is_attack=True,
+            severity=0.9
+        )
+        dec = evaluate_routing_gate(t, {"host": "lab-dc-01"})
+        assert dec.route == Route.SYSTEM_2_ESCALATE
+        assert math.isfinite(dec.winner_confidence)
+        assert "non-finite" in dec.reason.lower()
+

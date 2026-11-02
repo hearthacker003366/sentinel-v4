@@ -39,6 +39,7 @@ from orchestrator.routing_gate import (
     GATE_THRESHOLD,
 )
 from redteam.bot import RedTeamRunner
+from triage.laya_gate import LayaGate
 
 logger = logging.getLogger("sentinel.orchestrator")
 
@@ -58,53 +59,29 @@ class ProcessedIncident:
 class ChiefSentinelEngine:
     """Master dual-system orchestrator engine driving both Daemon and REPL modes."""
 
-    def __init__(self, db_path: str | None = None, api_key: str | None = None) -> None:
+    def __init__(
+        self,
+        db_path: str | None = None,
+        api_key: str | None = None,
+        laya_gate: LayaGate | None = None
+    ) -> None:
         self.hitl = HITLManager(db_path=db_path) if db_path else HITLManager()
         self.muse = MuseSparkAdapter(api_key=api_key)
         self.runner = RedTeamRunner(pacing_s=1.5)
+        self.laya = laya_gate or LayaGate()
         self.incidents: list[ProcessedIncident] = []
         self.applied_containments: list[dict[str, Any]] = []
 
     def triage_event_system1(self, event: dict[str, Any]) -> TriageVerdict:
-        """Evaluates event via System-1 heuristic/calibrated triage scoring."""
-        tag = event.get("signature_tag", "")
-        ev_type = event.get("event_type", "")
-
-        # High-confidence Malicious triggers (System-1 Auto-Act)
-        if "brute-force" in tag and "success" not in tag:
-            return TriageVerdict(
-                verdict="malicious",
-                winner_confidence=0.9650,
-                is_attack=True,
-                severity=0.85,
-                raw=event,
-            )
-        # High-confidence Benign triggers (System-1 Auto-Act)
-        elif "benign" in tag or "fido2" in str(event.get("mfa_method", "")):
-            return TriageVerdict(
-                verdict="benign",
-                winner_confidence=0.9350,
-                is_attack=False,
-                severity=0.05,
-                raw=event,
-            )
-        # Complex multi-hop or evasion attacks (System-1 Ambiguity -> Escalate to Muse Spark)
-        elif "lateral-smb" in tag or "c2-beacon" in tag or "priv-esc" in tag or "dns-tunnel" in tag:
-            return TriageVerdict(
-                verdict="suspicious",
-                winner_confidence=0.7420,  # Strict < 0.85 boundary -> Triggers System-2
-                is_attack=True,
-                severity=0.90,
-                raw=event,
-            )
-        else:
-            return TriageVerdict(
-                verdict="suspicious",
-                winner_confidence=0.6800,
-                is_attack=True,
-                severity=0.50,
-                raw=event,
-            )
+        """Evaluates event via System-1 LayaGate."""
+        res = self.laya.triage_event(event)
+        return TriageVerdict(
+            verdict=res["verdict"],
+            winner_confidence=res["winner_confidence"],
+            is_attack=res["is_attack"],
+            severity=res["severity"],
+            raw={"event": event, "source": res["source"]},
+        )
 
     def process_event(self, event: dict[str, Any]) -> ProcessedIncident:
         """Processes one event through System-1 -> Routing Gate -> System-2 -> HITL."""
@@ -135,11 +112,12 @@ class ChiefSentinelEngine:
             # If containment is proposed, generate cryptographic HITL token
             if muse_res.containment_proposal and muse_res.containment_proposal.action != ContainmentAction.NOOP:
                 p = muse_res.containment_proposal
+                # TTL is strictly the orchestrator's 300s constant, not model-settable
                 prop_id, raw_token = self.hitl.create_proposal(
                     target=p.target,
                     action=p.action.value,
                     reason=p.validation_error or muse_res.explanation[:120],
-                    ttl_seconds=p.ttl_seconds,
+                    ttl_seconds=300,
                 )
 
         incident = ProcessedIncident(
@@ -164,7 +142,7 @@ class ChiefSentinelEngine:
             "action": record.action,
             "applied_at": time.time(),
             "actor": actor,
-            "dry_run": False,  # Live operator authorization confirmed
+            "dry_run": True,  # V4 executes nothing for real (simulation only)
         })
         return record
 

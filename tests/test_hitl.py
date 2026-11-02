@@ -38,7 +38,7 @@ def test_proposal_creation_and_token_format(hitl_mgr):
         ttl_seconds=300
     )
     assert prop_id.startswith("prop-")
-    assert len(token) == 8
+    assert len(token) == 16  # 16-char hex from token_hex(8)
     # Raw token must NOT exist in the database
     with hitl_mgr._get_connection() as conn:
         row = conn.execute("SELECT token_hash FROM hitl_proposals WHERE proposal_id = ?", (prop_id,)).fetchone()
