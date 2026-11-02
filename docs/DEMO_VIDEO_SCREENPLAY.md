@@ -57,7 +57,7 @@
 ---
 
 ### Scene 4: Cytoscape Threat Graph & Telegram HITL Approval (1:30 – 2:10)
-* **Visual**: Switch to the live SOC Web Command Dashboard (`http://127.0.0.1:8515`). 
+* **Visual**: Switch to the live SOC Web Command Dashboard (`http://127.0.0.1:8516` or `8515`). 
   * The Cytoscape network graph lights up: compromised host `WKSTN-04` glows red, while target `BACKUP-VAULT-01` flashes with GraphSAGE predicted attack probability.
   * Mobile phone screen shown alongside: A Telegram alert arrives with an interactive Human-in-the-Loop authorization card and a 256-bit cryptographic `AUTH` token.
 * **On-Screen Callout**: 
@@ -81,7 +81,7 @@
 ---
 
 ### Scene 6: Quantitative Proof & Hackathon Alignment (2:40 – 3:00)
-* **Visual**: Full-screen split of both GitHub repositories (`sentinel-v4` and `sentinelV3`), highlighting the clean test suites (29/29 and 25/25 PASS) and open-weight local execution.
+* **Visual**: Full-screen split of both GitHub repositories (`sentinel-v4` and `sentinelV3`), highlighting the clean test suites (48/48 and 25/25 PASS) and open-weight local execution.
 * **On-Screen Callout**:
   > **Sentinel V4: Built for Your World | 100% Tested | Open Weights + Meta API**
 * **Spoken Script**:
@@ -99,6 +99,6 @@
    - `0:00–0:20`: Title slide + presenter webcam.
    - `0:20–0:50`: Terminal with RTX 4050 GPU logs + `EVAL.md` markdown table.
    - `0:50–1:30`: Code and Muse Spark client logs (`scripts/replay_scenarios.py`).
-   - `1:30–2:10`: SOC Dashboard (`127.0.0.1:8515`) with Telegram notification pop-up.
+   - `1:30–2:10`: SOC Dashboard (`127.0.0.1:8516` / `8515`) with Telegram notification pop-up.
    - `2:10–2:40`: Honeypot terminal capture.
    - `2:40–3:00`: Summary slide with GitHub repo URLs and MIT License badge.
