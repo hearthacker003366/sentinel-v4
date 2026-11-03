@@ -152,9 +152,16 @@ class ChiefSentinelEngine:
 
     def get_dashboard_state(self) -> dict[str, Any]:
         """Returns JSON snapshot of live system state for Cytoscape dashboard."""
+        pending = []
+        for p in self.hitl.get_pending_proposals():
+            p_dict = asdict(p)
+            if "token_hash" in p_dict and p_dict["token_hash"]:
+                p_dict["token_hash"] = p_dict["token_hash"][:8]
+            pending.append(p_dict)
+
         return {
             "incidents_total": len(self.incidents),
-            "pending_proposals": [asdict(p) for p in self.hitl.get_pending_proposals()],
+            "pending_proposals": pending,
             "applied_containments": self.applied_containments,
             "model_status": {
                 "system_1": "Laya-Tuned-V1 (RTX 4050 45ms Mean Latency)",

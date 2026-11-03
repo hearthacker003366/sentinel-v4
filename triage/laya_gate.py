@@ -70,29 +70,180 @@ class Decision:
     escalate: bool  # True when confidence < thresholds.auto_act
 
 
+def detect_event_source(event: dict[str, Any] | str) -> str:
+    """Derives telemetry source strictly from source/service or origin/type fields.
+
+    Never inspects signature_tag, scenario id, persona name, or verdict.
+    """
+    if isinstance(event, str):
+        return "raw_text"
+
+    explicit = str(event.get("source") or event.get("service") or event.get("log_source") or "").lower()
+    if explicit in ("sshd", "ssh", "auth", "auth.log"):
+        return "sshd"
+    if explicit in ("sysmon", "sysmon_process", "edr"):
+        return "sysmon_process"
+    if explicit in ("sysmon_network", "smb", "network"):
+        return "sysmon_network"
+    if explicit in ("vpn", "vpn_gateway"):
+        return "vpn"
+    if explicit in ("nids", "suricata", "snort"):
+        return "nids"
+    if explicit in ("honeypot",):
+        return "honeypot"
+    if explicit in ("dpkg", "apt", "systemd", "package"):
+        return "package_manager"
+    if explicit in ("dns",):
+        return "dns"
+
+    ev_type = str(event.get("event_type", "")).lower()
+    if ev_type.startswith("ssh_") or "sshd" in ev_type:
+        return "sshd"
+    if ev_type in ("process_creation", "process_create", "process_start"):
+        return "sysmon_process"
+    if ev_type in ("smb_session_open", "smb_session", "network_connection", "connection_open"):
+        return "sysmon_network"
+    if ev_type in ("lsass_memory_access", "memory_access"):
+        return "sysmon_access"
+    if ev_type.startswith("vpn_"):
+        return "vpn"
+    if ev_type.startswith("nids_") or "snort" in ev_type or "suricata" in ev_type:
+        return "nids"
+    if ev_type in ("package_update", "package_install", "software_update"):
+        return "package_manager"
+    if ev_type.startswith("honeypot_"):
+        return "honeypot"
+    if ev_type in ("c2_beacon", "beaconing"):
+        return "netflow"
+    if ev_type in ("dns_tunnel_query", "dns_query"):
+        return "dns"
+    if ev_type in ("bulk_egress_upload", "dlp_upload"):
+        return "dlp"
+
+    return "unknown"
+
+
 def format_event_text(event: dict[str, Any] | str) -> str:
-    """Formats structured telemetry event into log text representation for Laya."""
+    """Formats structured telemetry event into log text representation for Laya.
+
+    Selected ONLY by the event's source, applying ONE uniform template per source
+    filled generically from event fields without checking signature_tag.
+    """
     if isinstance(event, str):
         return event
-    tag = str(event.get("signature_tag", ""))
-    msg = event.get("message") or ""
-    ev_type = str(event.get("event_type", ""))
 
-    if "brute-force" in tag and "success" not in tag:
-        return f"kali sshd[8609]: {msg or ev_type} from {event.get('source_ip')} port {event.get('port', 22)} ssh2"
-    if "benign-mfa" in tag or "fido2" in str(event.get("mfa_method", "")):
-        return f"WIN-EVENT 4624 via VPN: {event.get('username', 'user')} authenticated successfully from {event.get('source_ip')}; device certificate valid, FIDO2 MFA push approved"
-    if "benign-scheduled" in tag:
-        return f"monitoring: scheduled internal vulnerability scan on {event.get('target_subnet', '10.10.10.0/24')} from {event.get('source_ip')}; change ticket SEC-AUDIT-WEEKLY nominal"
-    if "benign-patch" in tag:
-        return f"dpkg: security update installed: {event.get('package_name', 'openssl')} {event.get('new_version', '3.0.15')} on {event.get('host', 'host')} (service restart exit code 0, no config drift)"
-    if "benign-honeypot" in tag:
-        return f"uptime probe: {event.get('target_ip')} responded to routine internet crawler probes; 0 authenticated sessions, service nominal"
-    if "lateral-smb-powershell" in tag:
-        return f"process_creation: {event.get('process_name')} on {event.get('host')} connecting to {event.get('target_host')} ({event.get('target_ip')})"
-    if "lateral-smb" in tag:
-        return f"Sysmon[3] Network Connection on {event.get('source_host', event.get('host'))}: connected to {event.get('target_host')} {event.get('target_ip')}:445 SMB session"
-    return msg or f"{ev_type} on {event.get('target_ip') or event.get('host')}"
+    src = detect_event_source(event)
+
+    if src == "sshd":
+        host = event.get("host") or "kali"
+        pid = event.get("pid") or "8609"
+        msg = event.get("message")
+        if not msg:
+            user = event.get("username", "user")
+            src_ip = event.get("source_ip", "unknown")
+            port = event.get("port", 22)
+            status = event.get("status", "info")
+            msg = f"authentication {status} for {user} from {src_ip} port {port} ssh2"
+        return f"{host} sshd[{pid}]: {msg}"
+
+    elif src == "sysmon_process":
+        host = event.get("host", "workstation")
+        image = event.get("process_name") or event.get("image") or "process.exe"
+        cmd = event.get("command_line") or image
+        user = event.get("username") or event.get("user") or "SYSTEM"
+        parent = event.get("parent_process") or "explorer.exe"
+        return f"Sysmon[1] Process Create on {host}: Image: {image}, CommandLine: {cmd}, ParentImage: {parent}, User: {user}"
+
+    elif src == "sysmon_network":
+        host = event.get("source_host") or event.get("host") or "workstation"
+        target = event.get("target_host") or event.get("target_ip") or "target"
+        port = event.get("port", 445)
+        msg = event.get("message")
+        if not msg:
+            proc = event.get("process_name") or "svchost.exe"
+            msg = f"{proc} connected to {target}:{port}"
+        return f"Sysmon[3] Network Connection on {host}: {msg}"
+
+    elif src == "sysmon_access":
+        host = event.get("host", "workstation")
+        src_proc = event.get("source_process", "rundll32.exe")
+        target_proc = event.get("target_process", "lsass.exe")
+        access = event.get("granted_access", "0x1010")
+        return f"Sysmon[10] Process Access on {host}: SourceImage: {src_proc}, TargetImage: {target_proc}, GrantedAccess: {access}"
+
+    elif src == "vpn":
+        host = event.get("host", "VPN-GW")
+        user = event.get("username", "user")
+        src_ip = event.get("source_ip", "remote")
+        msg = event.get("message")
+        if not msg:
+            mfa = f"MFA={event.get('mfa_method')}" if event.get("mfa_verified") else "MFA=none"
+            cert = event.get("device_cert", "none")
+            msg = f"VPN session for {user} from {src_ip} ({mfa}, cert={cert})"
+        return f"WIN-EVENT 4624 on {host}: {msg}"
+
+    elif src == "nids":
+        src_ip = event.get("source_ip", "unknown")
+        target = event.get("target_subnet") or event.get("target_ip") or "network"
+        msg = event.get("message")
+        if not msg:
+            scan = event.get("scan_type", "scan")
+            ports = event.get("ports_scanned", [])
+            msg = f"{scan} against {target} ports={ports}"
+        return f"[NIDS ALERT] from {src_ip}: {msg}"
+
+    elif src == "package_manager":
+        host = event.get("host", "system")
+        msg = event.get("message")
+        if not msg:
+            pkg = event.get("package_name", "package")
+            ver = event.get("new_version") or event.get("version", "")
+            status = event.get("service_restart", "exit 0")
+            msg = f"security update installed: {pkg} {ver} ({status})"
+        return f"dpkg: on {host}: {msg}"
+
+    elif src == "honeypot":
+        target = event.get("target_ip", "decoy")
+        port = event.get("port", 80)
+        msg = event.get("message")
+        if not msg:
+            count = event.get("connection_count", 1)
+            paths = event.get("probe_paths", [])
+            msg = f"{count} probes to {paths}"
+        return f"honeypot: connection to {target}:{port}: {msg}"
+
+    elif src == "netflow":
+        host = event.get("host") or event.get("source_ip") or "host"
+        dst = event.get("dest_ip", "target")
+        port = event.get("dest_port", 80)
+        msg = event.get("message")
+        if not msg:
+            proto = event.get("protocol", "TCP")
+            cadence = event.get("cadence_seconds", "")
+            msg = f"periodic egress to {dst}:{port} {proto} cadence={cadence}s"
+        return f"netflow: {host} {msg}"
+
+    elif src == "dns":
+        host = event.get("host") or event.get("source_ip") or "host"
+        domain = event.get("query_domain", "")
+        qtype = event.get("query_type", "TXT")
+        msg = event.get("message")
+        if not msg:
+            vol = event.get("query_volume_10m", "")
+            ent = event.get("entropy_bits", "")
+            msg = f"{vol} {qtype} queries to {domain} entropy={ent}"
+        return f"DNS query from {host}: {msg}"
+
+    elif src == "dlp":
+        host = event.get("host") or event.get("source_ip") or "host"
+        msg = event.get("message") or f"bulk egress upload from {host}"
+        return f"Proxy DLP: {msg}"
+
+    else:
+        msg = event.get("message")
+        ev_type = str(event.get("event_type", "event"))
+        host = event.get("target_ip") or event.get("host") or "endpoint"
+        return msg or f"{ev_type} on {host}"
 
 
 class LayaGate:

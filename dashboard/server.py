@@ -185,9 +185,19 @@ class V4DashboardHandler(BaseHTTPRequestHandler):
 
             feed.append(item)
 
-            # Check if this incident forms a threat path hop
-            if inc.routing.route.value == "system_2_escalate" and "lateral" in str(inc.raw_event.get("signature_tag")):
-                threat_path_hops = ["192.168.56.20", "lab-win10-03", "lab-dc-01"]
+        # Derive threat path from attack incidents if lateral movement is present
+        has_lateral = any("lateral" in str(inc.raw_event.get("signature_tag", "")) for inc in ENGINE.incidents)
+        threat_path_hops: list[str] = []
+        if has_lateral:
+            seen_hops: set[str] = set()
+            for inc in ENGINE.incidents:
+                if inc.triage.is_attack or inc.triage.verdict == "malicious":
+                    src = inc.raw_event.get("source_ip") or inc.raw_event.get("source_host") or inc.raw_event.get("host")
+                    dst = inc.raw_event.get("target_ip") or inc.raw_event.get("target_host")
+                    for node in (src, dst):
+                        if node and isinstance(node, str) and node not in seen_hops:
+                            seen_hops.add(node)
+                            threat_path_hops.append(node)
 
         return {
             "summary": {
