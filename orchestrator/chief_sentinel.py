@@ -14,13 +14,19 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import logging
 import os
 import sys
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from model_adapter.client import ThreatContext, ContainmentAction
 from model_adapter.muse_spark_adapter import MuseSparkAdapter, EnhancedReasoningResult
@@ -38,6 +44,7 @@ from orchestrator.routing_gate import (
     Route,
     GATE_THRESHOLD,
 )
+from orchestrator.telegram_gateway import TelegramGateway, HttpTelegramTransport
 from redteam.bot import RedTeamRunner
 from triage.laya_gate import LayaGate
 
@@ -63,7 +70,8 @@ class ChiefSentinelEngine:
         self,
         db_path: str | None = None,
         api_key: str | None = None,
-        laya_gate: LayaGate | None = None
+        laya_gate: LayaGate | None = None,
+        telegram_gateway: TelegramGateway | None = None,
     ) -> None:
         self.hitl = HITLManager(db_path=db_path) if db_path else HITLManager()
         self.muse = MuseSparkAdapter(api_key=api_key)
@@ -71,6 +79,27 @@ class ChiefSentinelEngine:
         self.laya = laya_gate or LayaGate()
         self.incidents: list[ProcessedIncident] = []
         self.applied_containments: list[dict[str, Any]] = []
+
+        # Telegram HITL Gateway wiring
+        self._polling_stop = threading.Event()
+        if telegram_gateway is not None:
+            self.telegram: TelegramGateway | None = telegram_gateway
+            self._start_telegram_polling()
+        else:
+            bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+            allowed_ids = os.environ.get("TELEGRAM_ALLOWED_USER_IDS", "").strip()
+            if bot_token and allowed_ids:
+                transport = HttpTelegramTransport(bot_token)
+                self.telegram = TelegramGateway(
+                    hitl_manager=self.hitl,
+                    bot_token=bot_token,
+                    transport=transport,
+                )
+                self._start_telegram_polling()
+            else:
+                self.telegram = None
+                logger.info("[TELEGRAM] disabled — env vars missing, console-only approvals")
+                print("[TELEGRAM] disabled — env vars missing, console-only approvals")
 
     def triage_event_system1(self, event: dict[str, Any]) -> TriageVerdict:
         """Evaluates event via System-1 LayaGate."""
@@ -119,6 +148,17 @@ class ChiefSentinelEngine:
                     reason=p.validation_error or muse_res.explanation[:120],
                     ttl_seconds=300,
                 )
+                if self.telegram and raw_token:
+                    self.telegram.send_containment_card(
+                        chat_id=None,
+                        proposal_id=prop_id,
+                        raw_token=raw_token,
+                        action=p.action.value,
+                        target=p.target,
+                        laya_confidence=triage.winner_confidence,
+                        spark_reason=p.validation_error or muse_res.explanation[:120],
+                        ttl_seconds=300,
+                    )
 
         incident = ProcessedIncident(
             incident_id=incident_id,
@@ -144,11 +184,72 @@ class ChiefSentinelEngine:
             "actor": actor,
             "dry_run": True,  # V4 executes nothing for real (simulation only)
         })
+        if self.telegram:
+            fingerprint = hashlib.sha256(token.strip().lower().encode("utf-8")).hexdigest()[:8]
+            self.telegram.edit_card_outcome(
+                proposal_id=record.proposal_id,
+                status="approved",
+                actor=actor,
+                token_fingerprint=fingerprint,
+                record=record,
+            )
         return record
 
     def reject_containment(self, token: str, actor: str = "console") -> ProposalRecord:
         """Rejects a proposed containment action."""
-        return self.hitl.reject_proposal(token, actor=actor)
+        record = self.hitl.reject_proposal(token, actor=actor)
+        if self.telegram:
+            fingerprint = hashlib.sha256(token.strip().lower().encode("utf-8")).hexdigest()[:8]
+            self.telegram.edit_card_outcome(
+                proposal_id=record.proposal_id,
+                status="rejected",
+                actor=actor,
+                token_fingerprint=fingerprint,
+                record=record,
+            )
+        return record
+
+    def _start_telegram_polling(self) -> None:
+        if not self.telegram:
+            return
+
+        def _worker():
+            offset = None
+            while not self._polling_stop.is_set():
+                try:
+                    offset, results = self.telegram.poll_updates(offset=offset, timeout=25)
+                    for res in results:
+                        if res.get("status") == "approved" and "record" in res:
+                            rec = res["record"]
+                            self.applied_containments.append({
+                                "proposal_id": rec.proposal_id,
+                                "target": rec.target,
+                                "action": rec.action,
+                                "applied_at": time.time(),
+                                "actor": "telegram",
+                                "dry_run": True,
+                            })
+                            print(
+                                f"\n[TELEGRAM HITL] Containment APPROVED for {rec.proposal_id} "
+                                f"({rec.action} on {rec.target}).\nsentinel-v4> ",
+                                end="",
+                                flush=True,
+                            )
+                except Exception as e:
+                    logger.debug("[TELEGRAM] Polling loop error: %s", e)
+
+                if self._polling_stop.wait(1.0):
+                    break
+
+        t = threading.Thread(target=_worker, daemon=True, name="sentinel-telegram-poll")
+        t.start()
+
+    def stop(self) -> None:
+        """Signals background polling threads to stop."""
+        self._polling_stop.set()
+
+    def __del__(self) -> None:
+        self.stop()
 
     def get_dashboard_state(self) -> dict[str, Any]:
         """Returns JSON snapshot of live system state for Cytoscape dashboard."""

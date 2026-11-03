@@ -41,7 +41,7 @@ model_adapter/   Muse Spark System-2 client
 orchestrator/    Chief Sentinel — dry-run containment + Telegram HITL
 redteam/         LLM red-team bots (simulated lab only)
 scripts/         replay harness (Gate 1)
-tests/           59 tests
+tests/           62 tests
 docs/            Laya training proof screenshots (assets/)
 requirements.txt pinned dependencies
 ```
@@ -61,7 +61,7 @@ requirements.txt pinned dependencies
   - Scenario 1 (SSH brute force + lateral movement): PASS, conf 0.87 — dry-run reversible containment with TTL + approval request + threat-path evidence.
   - Scenario 2 (C2 beaconing + exfiltration): PASS, conf 0.82 — targeted isolation with TTL, zero blanket actions.
   - Scenario 3 (benign discriminator): PASS, conf 0.91 — zero containment proposals, zero approval requests, explicit benign classification.
-- **Tests: 59/59 pass** (`python -m pytest tests/`), including the three hardening tests that were missing before: tag breakout, multi-line SSE folding, inf/NaN confidence escalation.
+- **Tests: 62/62 pass** (`python -m pytest tests/`), including the three hardening tests that were missing before: tag breakout, multi-line SSE folding, inf/NaN confidence escalation.
 
 ## 🤖 Laya (System-1 gate)
 
@@ -83,7 +83,7 @@ See full metrics and confusion breakdown in [EVAL.md](EVAL.md).
 ## 🧪 Run it
 
 ```bash
-python -m pytest tests/          # 59 passed
+python -m pytest tests/          # 62 passed
 python scripts/replay_scenarios.py   # 3/3 scenarios passed
 ```
 

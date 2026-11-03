@@ -54,6 +54,13 @@ class TelegramTransport(Protocol):
     ) -> None:
         ...
 
+    def get_updates(
+        self,
+        offset: int | None = None,
+        timeout: int = 25
+    ) -> list[dict[str, Any]]:
+        ...
+
 
 class HttpTelegramTransport:
     """Standard HTTP transport for Telegram Bot API using urllib."""
@@ -102,6 +109,23 @@ class HttpTelegramTransport:
         with urllib.request.urlopen(req, timeout=10.0) as resp:
             pass
 
+    def get_updates(
+        self,
+        offset: int | None = None,
+        timeout: int = 25
+    ) -> list[dict[str, Any]]:
+        url = f"{self.api_url}/getUpdates?timeout={timeout}"
+        if offset is not None:
+            url += f"&offset={offset}"
+        req = urllib.request.Request(url)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout + 5.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data.get("result", [])
+        except Exception as e:
+            logger.debug("[TELEGRAM] getUpdates error: %s", e)
+            return []
+
 
 class FakeTelegramTransport:
     """Hermetic in-memory transport for deterministic testing."""
@@ -109,6 +133,7 @@ class FakeTelegramTransport:
     def __init__(self) -> None:
         self.sent_messages: list[dict[str, Any]] = []
         self.edited_messages: list[dict[str, Any]] = []
+        self.queued_updates: list[dict[str, Any]] = []
         self._next_id = 100
 
     def send_message(
@@ -145,6 +170,15 @@ class FakeTelegramTransport:
                 m["text"] = text
                 m["reply_markup"] = reply_markup
 
+    def get_updates(
+        self,
+        offset: int | None = None,
+        timeout: int = 25
+    ) -> list[dict[str, Any]]:
+        updates = list(self.queued_updates)
+        self.queued_updates.clear()
+        return updates
+
 
 class TelegramGateway:
     """Manages Telegram containment alerts and human authorizations."""
@@ -177,22 +211,33 @@ class TelegramGateway:
         else:
             self.transport = FakeTelegramTransport()
 
+        self.sent_cards: dict[str, list[dict[str, Any]]] = {}
+        self.default_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip() or (
+            next(iter(self.allowed_user_ids)) if self.allowed_user_ids else None
+        )
+
     def is_user_allowed(self, user_id: int) -> bool:
         """Enforces sender allowlist."""
         return user_id in self.allowed_user_ids
 
     def send_containment_card(
         self,
-        chat_id: int | str,
+        chat_id: int | str | None,
         proposal_id: str,
         raw_token: str,
         action: str,
         target: str,
         laya_confidence: float,
         spark_reason: str,
+        dry_run: bool = True,
         ttl_seconds: int = 300,
     ) -> int:
         """Sends the HITL containment card with inline buttons."""
+        target_chat = chat_id or self.default_chat_id
+        if not target_chat:
+            logger.warning("[TELEGRAM] No chat_id or allowed_user_ids configured for containment card.")
+            return 0
+
         fingerprint = hashlib.sha256(raw_token.strip().lower().encode("utf-8")).hexdigest()[:8]
         text = (
             f"🚨 SENTINEL V4 // HITL CONTAINMENT AUTHORIZATION\n"
@@ -216,7 +261,120 @@ class TelegramGateway:
                 ]
             ]
         }
-        return self.transport.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+        msg_id = self.transport.send_message(chat_id=target_chat, text=text, reply_markup=markup)
+        if proposal_id not in self.sent_cards:
+            self.sent_cards[proposal_id] = []
+        self.sent_cards[proposal_id].append({
+            "chat_id": target_chat,
+            "message_id": msg_id,
+            "fingerprint": fingerprint,
+            "action": action,
+            "target": target,
+        })
+        return msg_id
+
+    def edit_card_outcome(
+        self,
+        proposal_id: str,
+        status: str,
+        actor: str = "console",
+        token_fingerprint: str | None = None,
+        record: ProposalRecord | None = None,
+    ) -> None:
+        """Edits active Telegram cards for a resolved proposal (e.g. from console or expiry)."""
+        cards = self.sent_cards.get(proposal_id, [])
+        ts_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        for card in cards:
+            chat_id = card["chat_id"]
+            message_id = card["message_id"]
+            fp = token_fingerprint or card.get("fingerprint", "")
+            action = record.action if record else card.get("action", "")
+            target = record.target if record else card.get("target", "")
+
+            if status == "approved":
+                text = (
+                    f"✅ CONTAINMENT APPROVED\n"
+                    f"---------------------------------------------\n"
+                    f"Proposal ID: {proposal_id}\n"
+                    f"Action: {action}\n"
+                    f"Target: {target}\n"
+                    f"Decided At: {ts_iso}\n"
+                    f"Token Fingerprint: {fp}\n"
+                    f"Actor: {actor}\n"
+                    f"[DRY-RUN SIMULATION ONLY]"
+                )
+            elif status == "rejected":
+                text = (
+                    f"❌ CONTAINMENT REJECTED\n"
+                    f"---------------------------------------------\n"
+                    f"Proposal ID: {proposal_id}\n"
+                    f"Decided At: {ts_iso}\n"
+                    f"Token Fingerprint: {fp}\n"
+                    f"Actor: {actor}\n"
+                    f"[DRY-RUN SIMULATION ONLY]"
+                )
+            elif status == "expired":
+                text = (
+                    f"⏱️ CONTAINMENT PROPOSAL EXPIRED\n"
+                    f"---------------------------------------------\n"
+                    f"Proposal ID: {proposal_id}\n"
+                    f"Action: {action}\n"
+                    f"Target: {target}\n"
+                    f"Expired At: {ts_iso}\n"
+                    f"Token Fingerprint: {fp}\n"
+                    f"[DRY-RUN SIMULATION ONLY]"
+                )
+            else:
+                continue
+
+            try:
+                self.transport.edit_message_text(chat_id, message_id, text, reply_markup=None)
+            except Exception as e:
+                logger.warning("[TELEGRAM] Failed to edit message %s for proposal %s: %s", message_id, proposal_id, e)
+
+    def poll_updates(
+        self,
+        offset: int | None = None,
+        timeout: int = 25
+    ) -> tuple[int | None, list[dict[str, Any]]]:
+        """Polls getUpdates via transport and dispatches callbacks/commands.
+        Returns (next_offset, list_of_action_results).
+        """
+        updates = self.transport.get_updates(offset=offset, timeout=timeout)
+        next_offset = offset
+        results = []
+        for update in updates:
+            up_id = update.get("update_id")
+            if up_id is not None:
+                next_offset = up_id + 1
+
+            if "callback_query" in update:
+                cb = update["callback_query"]
+                user_id = cb.get("from", {}).get("id")
+                msg = cb.get("message", {})
+                chat_id = msg.get("chat", {}).get("id")
+                msg_id = msg.get("message_id")
+                cb_data = cb.get("data", "")
+                if user_id and chat_id and msg_id:
+                    res = self.handle_callback_query(user_id, chat_id, msg_id, cb_data)
+                    if res:
+                        results.append(res)
+
+            elif "message" in update:
+                m = update["message"]
+                user_id = m.get("from", {}).get("id")
+                chat_id = m.get("chat", {}).get("id")
+                text = m.get("text", "")
+                reply_to = m.get("reply_to_message", {}).get("message_id")
+                if user_id and chat_id and text:
+                    res = self.handle_text_command(user_id, chat_id, text, reply_to_message_id=reply_to)
+                    if res and "error" in res and self.is_user_allowed(user_id):
+                        self.transport.send_message(chat_id, res["error"])
+                    elif res:
+                        results.append(res)
+
+        return next_offset, results
 
     def handle_callback_query(
         self,
@@ -252,7 +410,7 @@ class TelegramGateway:
                     f"[DRY-RUN SIMULATION ONLY]"
                 )
                 self.transport.edit_message_text(chat_id, message_id, edited_text, reply_markup=None)
-                return {"status": "approved", "proposal_id": rec.proposal_id}
+                return {"status": "approved", "proposal_id": rec.proposal_id, "record": rec}
             except (TokenAlreadyConsumed, TokenExpired, GateLockedOut, ValueError) as e:
                 logger.warning("[TELEGRAM] Approval failed for user %d: %s", user_id, e)
                 return {"error": str(e)}
@@ -270,7 +428,7 @@ class TelegramGateway:
                     f"[DRY-RUN SIMULATION ONLY]"
                 )
                 self.transport.edit_message_text(chat_id, message_id, edited_text, reply_markup=None)
-                return {"status": "rejected", "proposal_id": rec.proposal_id}
+                return {"status": "rejected", "proposal_id": rec.proposal_id, "record": rec}
             except Exception as e:
                 logger.warning("[TELEGRAM] Rejection failed for user %d: %s", user_id, e)
                 return {"error": str(e)}
@@ -315,7 +473,7 @@ class TelegramGateway:
                     self.transport.edit_message_text(chat_id, reply_to_message_id, reply_text, reply_markup=None)
                 else:
                     self.transport.send_message(chat_id, reply_text)
-                return {"status": "approved", "proposal_id": rec.proposal_id}
+                return {"status": "approved", "proposal_id": rec.proposal_id, "record": rec}
             except Exception as e:
                 return {"error": str(e)}
 
@@ -333,7 +491,7 @@ class TelegramGateway:
                     self.transport.edit_message_text(chat_id, reply_to_message_id, reply_text, reply_markup=None)
                 else:
                     self.transport.send_message(chat_id, reply_text)
-                return {"status": "rejected", "proposal_id": rec.proposal_id}
+                return {"status": "rejected", "proposal_id": rec.proposal_id, "record": rec}
             except Exception as e:
                 return {"error": str(e)}
 
