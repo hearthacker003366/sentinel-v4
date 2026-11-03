@@ -453,6 +453,22 @@ def execute_tool_call(tool_name: str, args: dict[str, Any], ctx: ThreatContext) 
     return {"error": f"Unknown tool {tool_name!r}", "status": "unsupported"}
 
 
+def _normalize_json_args(raw: Any) -> str:
+    """Ensure tool arguments in assistant conversation history are valid JSON (§1.7)."""
+    if isinstance(raw, str):
+        trimmed = raw.strip()
+        if not trimmed:
+            return "{}"
+        try:
+            json.loads(trimmed)
+            return trimmed
+        except Exception:
+            return "{}"
+    if isinstance(raw, dict):
+        return json.dumps(raw)
+    return "{}"
+
+
 # ---------------------------------------------------------------------------
 # Client.
 # ---------------------------------------------------------------------------
@@ -675,11 +691,7 @@ class MuseSparkClient:
                         "type": "function",
                         "function": {
                             "name": tc.get("function", {}).get("name", ""),
-                            "arguments": (
-                                tc.get("function", {}).get("arguments", "{}")
-                                if isinstance(tc.get("function", {}).get("arguments"), str)
-                                else json.dumps(tc.get("function", {}).get("arguments", {}))
-                            ),
+                            "arguments": _normalize_json_args(tc.get("function", {}).get("arguments")),
                         },
                     }
                     for i, tc in enumerate(tool_calls)
