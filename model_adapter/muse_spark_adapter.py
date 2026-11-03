@@ -76,13 +76,14 @@ class MuseSparkAdapter:
         if self._live_available and self._client:
             try:
                 res = self._client.explain_threat_path(ctx)
+                fallback_banner = res.raw.get("fallback_banner")
                 return EnhancedReasoningResult(
                     explanation=res.explanation,
                     containment_recommendation=res.containment_recommendation,
                     remediation_draft=res.remediation_draft,
                     confidence=res.confidence,
                     is_recorded_response=False,
-                    fallback_banner=None,
+                    fallback_banner=fallback_banner,
                     containment_proposal=res.containment_proposal,
                     raw=res.raw,
                 )

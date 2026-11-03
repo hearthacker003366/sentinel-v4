@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
 
-from .sentinel_v4_mcp_tools import TOOLS, TOOL_REGISTRY_VERSION
+from .sentinel_v4_mcp_tools import TOOLS, TOOL_REGISTRY_VERSION, in_lab_scope
 
 # ---------------------------------------------------------------------------
 # Pinned configuration (frozen — do not parameterize the tier).
@@ -398,6 +398,61 @@ def validate_api_url(url: str) -> str:
     return url
 
 
+def execute_tool_call(tool_name: str, args: dict[str, Any], ctx: ThreatContext) -> dict[str, Any]:
+    """Execute a validated tool call against ThreatContext and lab state (§1.7)."""
+    if tool_name == "blue.threat_path":
+        path = ctx.graph_path if ctx.graph_path else [args.get("entity", "unknown"), "lab-dc-01"]
+        return {
+            "entity": args.get("entity"),
+            "threat_path": path,
+            "kill_chain_stages": ["initial_access", "execution", "lateral_movement"],
+            "status": "path_identified",
+        }
+    if tool_name == "blue.get_alerts":
+        alerts = [{"summary": ctx.event_summary, "severity": "high", "telemetry": ctx.telemetry}] if ctx.event_summary else []
+        return {"alerts": alerts, "count": len(alerts), "min_severity": args.get("min_severity", "medium")}
+    if tool_name == "blue.query_telemetry":
+        return {
+            "entity": args.get("entity"),
+            "window_minutes": args.get("window_minutes", 30),
+            "records": [ctx.telemetry] if ctx.telemetry else [],
+            "summary": ctx.event_summary,
+        }
+    if tool_name == "blue.propose_containment":
+        return {
+            "proposal_id": f"prop-{uuid.uuid4().hex[:8]}",
+            "target": args.get("target"),
+            "action": args.get("action"),
+            "reason": args.get("reason"),
+            "ttl_seconds": args.get("ttl_seconds", DEFAULT_TTL_SECONDS),
+            "dry_run": True,
+            "status": "proposed",
+        }
+    if tool_name == "hitl.request_approval":
+        return {
+            "approval_id": f"AUTH-{uuid.uuid4().hex[:6]}",
+            "proposal_id": args.get("proposal_id"),
+            "status": "queued_for_human",
+            "channel": "telegram",
+        }
+    if tool_name == "hitl.approval_status":
+        return {"approval_id": args.get("approval_id"), "status": "pending"}
+    if tool_name in ("blue.apply_containment", "blue.revoke_containment"):
+        return {"proposal_id": args.get("proposal_id"), "status": "acknowledged", "dry_run": True}
+    if tool_name == "red.list_lab_targets":
+        return {"targets": ["192.168.56.20", "192.168.56.31", "10.10.10.88", "10.10.10.21"], "scope": "lab_only"}
+    if tool_name == "red.run_recon":
+        tgt = args.get("target", "")
+        if not in_lab_scope(tgt):
+            return {"error": f"Target {tgt} outside lab scope", "status": "denied"}
+        return {"target": tgt, "technique": args.get("technique"), "status": "completed", "findings": []}
+    if tool_name == "red.report_finding":
+        return {"finding_id": f"find-{uuid.uuid4().hex[:6]}", "status": "logged"}
+    if tool_name == "red.kill_switch":
+        return {"status": "stopped", "reason": args.get("reason", "manual stop")}
+    return {"error": f"Unknown tool {tool_name!r}", "status": "unsupported"}
+
+
 # ---------------------------------------------------------------------------
 # Client.
 # ---------------------------------------------------------------------------
@@ -540,6 +595,9 @@ class MuseSparkClient:
             proposal = validate_containment_proposal(None)
             containment_text = str(containment_raw or "")
 
+        if (proposal is None or proposal.action == ContainmentAction.NOOP) and isinstance(data.get("proposal"), dict):
+            proposal = validate_containment_proposal(data["proposal"])
+
         containment = _enforce_containment_safety(containment_text)
         remediation = str(data.get("remediation_draft", "") or "").strip()
 
@@ -562,16 +620,127 @@ class MuseSparkClient:
         )
 
     def _reason(self, task: str, ctx: ThreatContext) -> ReasoningResult:
-        payload = self._build_payload(task, ctx)
-        raw_text = self._call_api(payload)
-        is_sse = "data:" in raw_text or raw_text.startswith(":") or "event:" in raw_text
-        if is_sse:
-            content, tool_calls = _extract_response(parse_sse_events(raw_text), raw_text)
-            response_text = content if content.strip() else raw_text
-        else:
-            content, tool_calls = _extract_response([], raw_text)
-            response_text = content if content.strip() else raw_text
-        return self._parse_result(response_text, tool_calls)
+        messages = self._build_messages(task, ctx)
+        functions = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t["name"],
+                    "description": t.get("description", ""),
+                    "parameters": t.get("inputSchema", {"type": "object"}),
+                },
+            }
+            for t in self.tools
+        ]
+        max_rounds = 6
+        all_tool_calls: list[dict[str, Any]] = []
+        last_response_text = ""
+
+        for round_idx in range(max_rounds):
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "tools": functions,
+                "tool_choice": self.tool_choice,
+                "stream": True,
+            }
+            raw_text = self._call_api(payload)
+            is_sse = "data:" in raw_text or raw_text.startswith(":") or "event:" in raw_text
+            if is_sse:
+                content, tool_calls = _extract_response(parse_sse_events(raw_text), raw_text)
+            else:
+                content, tool_calls = _extract_response([], raw_text)
+
+            last_response_text = content if content.strip() else raw_text
+            all_tool_calls.extend(tool_calls)
+
+            extracted = _extract_json_object(last_response_text)
+            is_final_verdict = bool(
+                extracted
+                and extracted.get("explanation")
+                and ("containment_recommendation" in extracted or "proposal" in extracted)
+            )
+
+            # If no tool calls requested, or if the model already finalized a valid JSON verdict:
+            if not tool_calls or is_final_verdict:
+                return self._parse_result(last_response_text, all_tool_calls)
+
+            # Build assistant message with raw tool calls for multi-turn history
+            assistant_msg: dict[str, Any] = {
+                "role": "assistant",
+                "content": content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.get("id", f"call_{i}"),
+                        "type": "function",
+                        "function": {
+                            "name": tc.get("function", {}).get("name", ""),
+                            "arguments": (
+                                tc.get("function", {}).get("arguments", "{}")
+                                if isinstance(tc.get("function", {}).get("arguments"), str)
+                                else json.dumps(tc.get("function", {}).get("arguments", {}))
+                            ),
+                        },
+                    }
+                    for i, tc in enumerate(tool_calls)
+                ],
+            }
+            messages.append(assistant_msg)
+
+            # Execute validated tool calls, feed validation errors back for unvalidated calls
+            for i, tc in enumerate(tool_calls):
+                call_id = tc.get("id", f"call_{i}")
+                name = tc.get("function", {}).get("name", "")
+                if tc.get("arguments_validated"):
+                    raw_args = tc.get("function", {}).get("arguments", "{}")
+                    try:
+                        parsed_args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
+                    except (json.JSONDecodeError, ValueError):
+                        parsed_args = {}
+                    res = execute_tool_call(name, parsed_args, ctx)
+                else:
+                    val_err = tc.get("validation_error", "Missing required tool arguments")
+                    res = {
+                        "error": val_err,
+                        "status": "validation_failed",
+                        "instruction": f"Tool '{name}' argument validation failed: {val_err}. Please provide required arguments matching the schema.",
+                    }
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": call_id,
+                    "name": name,
+                    "content": json.dumps(res),
+                })
+
+        # 6-round budget exhausted without valid JSON finalization -> loud failure marker
+        failure_msg = f"Tool-call loop budget exhausted ({max_rounds} rounds) without final JSON verdict"
+        proposal = ContainmentProposal(
+            proposal_id=f"prop-failed-{uuid.uuid4().hex[:8]}",
+            action=ContainmentAction.NOOP,
+            target="",
+            ttl_seconds=DEFAULT_TTL_SECONDS,
+            dry_run=True,
+            reversible=True,
+            is_executable=False,
+            validation_error=failure_msg,
+        )
+        return ReasoningResult(
+            explanation=f"[LOUD FAILURE] {failure_msg}. Last response: {last_response_text[:500]}",
+            containment_recommendation=f"[LOUD FAILURE] {failure_msg}",
+            remediation_draft="",
+            confidence=0.0,
+            containment_proposal=proposal,
+            raw={
+                "model": self.model,
+                "tool_choice": self.tool_choice,
+                "tool_registry_version": TOOL_REGISTRY_VERSION,
+                "tool_calls": all_tool_calls,
+                "response_text": last_response_text[:8000],
+                "validation_error": failure_msg,
+                "fallback_banner": f"[WARNING] {failure_msg}",
+            },
+        )
 
     def explain_threat_path(self, ctx: ThreatContext) -> ReasoningResult:
         return self._reason("explain_threat_path", ctx)
