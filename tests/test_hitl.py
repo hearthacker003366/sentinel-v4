@@ -106,3 +106,76 @@ def test_audit_log_stores_hash_only(hitl_mgr):
         assert len(rows) == 1
         assert rows[0][0] != token
         assert rows[0][0] == hitl_mgr.hash_token(token)
+
+
+def test_atomic_status_guarded_consume(hitl_mgr, monkeypatch):
+    """Concurrency (GLM F-05): Concurrent consume race must be blocked by status-guarded update."""
+    prop_id, token = hitl_mgr.create_proposal(
+        target="192.168.56.31",
+        action="isolate_host",
+        reason="Atomic test"
+    )
+
+    orig_get_conn = hitl_mgr._get_connection
+
+    class RacingConn:
+        def __init__(self, conn):
+            self._conn = conn
+
+        def execute(self, sql, *args, **kwargs):
+            if "UPDATE hitl_proposals SET status = 'approved'" in sql:
+                with orig_get_conn() as other_conn:
+                    other_conn.execute("UPDATE hitl_proposals SET status = 'approved' WHERE proposal_id = ?", (prop_id,))
+                    other_conn.commit()
+            return self._conn.execute(sql, *args, **kwargs)
+
+        def __getattr__(self, name):
+            return getattr(self._conn, name)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return self._conn.__exit__(*args)
+
+    monkeypatch.setattr(hitl_mgr, "_get_connection", lambda: RacingConn(orig_get_conn()))
+
+    with pytest.raises(TokenAlreadyConsumed):
+        hitl_mgr.verify_and_consume(token, actor="racing_worker")
+
+
+def test_atomic_status_guarded_reject(hitl_mgr, monkeypatch):
+    """Concurrency (GLM F-05): Concurrent reject race must be blocked by status-guarded update."""
+    prop_id, token = hitl_mgr.create_proposal(
+        target="192.168.56.31",
+        action="isolate_host",
+        reason="Atomic reject test"
+    )
+
+    orig_get_conn = hitl_mgr._get_connection
+
+    class RacingConn:
+        def __init__(self, conn):
+            self._conn = conn
+
+        def execute(self, sql, *args, **kwargs):
+            if "UPDATE hitl_proposals SET status = 'rejected'" in sql:
+                with orig_get_conn() as other_conn:
+                    other_conn.execute("UPDATE hitl_proposals SET status = 'rejected' WHERE proposal_id = ?", (prop_id,))
+                    other_conn.commit()
+            return self._conn.execute(sql, *args, **kwargs)
+
+        def __getattr__(self, name):
+            return getattr(self._conn, name)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return self._conn.__exit__(*args)
+
+    monkeypatch.setattr(hitl_mgr, "_get_connection", lambda: RacingConn(orig_get_conn()))
+
+    with pytest.raises(TokenAlreadyConsumed):
+        hitl_mgr.reject_proposal(token, actor="racing_worker")
+

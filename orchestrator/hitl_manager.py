@@ -228,10 +228,12 @@ class HITLManager:
                 raise TokenExpired(f"Token for proposal {prop.proposal_id} has expired.")
 
             # Valid! Consume token immediately
-            conn.execute(
-                "UPDATE hitl_proposals SET status = 'approved', approved_at = ? WHERE proposal_id = ?;",
+            cur_upd = conn.execute(
+                "UPDATE hitl_proposals SET status = 'approved', approved_at = ? WHERE proposal_id = ? AND status = 'pending';",
                 (now, prop.proposal_id)
             )
+            if cur_upd.rowcount != 1:
+                raise TokenAlreadyConsumed(f"Token for proposal {prop.proposal_id} was already consumed.")
             # Log SHA-256 fingerprint only
             conn.execute("""
                 INSERT INTO hitl_audit (
@@ -267,10 +269,12 @@ class HITLManager:
             if prop.status != "pending":
                 raise TokenAlreadyConsumed(f"Proposal {prop.proposal_id} is already in state {prop.status}.")
 
-            conn.execute(
-                "UPDATE hitl_proposals SET status = 'rejected' WHERE proposal_id = ?;",
+            cur_upd = conn.execute(
+                "UPDATE hitl_proposals SET status = 'rejected' WHERE proposal_id = ? AND status = 'pending';",
                 (prop.proposal_id,)
             )
+            if cur_upd.rowcount != 1:
+                raise TokenAlreadyConsumed(f"Proposal {prop.proposal_id} is already in state {prop.status}.")
             conn.execute("""
                 INSERT INTO hitl_audit (
                     proposal_id, action, target, token_hash, result, actor, timestamp
