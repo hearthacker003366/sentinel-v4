@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px;
+    height: 1080px;
+    background: #06090e;
+    color: #e6edf3;
+    font-family: 'Space Grotesk', sans-serif;
+    display: flex;
+    flex-direction: column;
+    padding: 60px 80px;
+    overflow: hidden;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(30, 80, 150, 0.15), transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(0, 200, 150, 0.1), transparent 50%);
+    pointer-events: none;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1f2937;
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+  }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #00e5a3;
+    background: rgba(0, 229, 163, 0.1);
+    border: 1px solid rgba(0, 229, 163, 0.3);
+    padding: 6px 14px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .time-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #8b949e;
+  }
+  h1 {
+    font-size: 46px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .subtitle {
+    font-size: 22px;
+    color: #8b949e;
+    margin-bottom: 40px;
+  }
+  .content {
+    flex: 1;
+    display: flex;
+    gap: 40px;
+  }
+  .panel {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    padding: 30px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-metric {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 44px;
+    font-weight: 800;
+    color: #00e5a3;
+    margin: 10px 0;
+  }
+  .card-label {
+    font-size: 15px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  pre, code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #484f58;
+    border-top: 1px solid #161b22;
+    padding-top: 20px;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="badge">SCENE 4 // SOC DASHBOARD & TELEGRAM HITL (1:30 – 2:10)</div>
+    <div class="time-badge">META GLOBAL AI HACKATHON 2026 // CEREBRAL VALLEY</div>
+  </div>
+  <h1>Scene 4: Cytoscape Threat Graph & Telegram HITL Approval</h1>
+  <div class="subtitle">Real-Time Network Topology Isolation with Cryptographic Two-Way Telegram Authorization</div>
+  <div class="content">
+    
+    <div class="panel" style="flex: 1.3;">
+      <div class="card-label">Live Cytoscape SOC Command Dashboard (Port 8516)</div>
+      <div style="margin-top: 15px; background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 20px; height: 380px; position: relative;">
+        <!-- Emulated topology view -->
+        <div style="position: absolute; top: 30px; left: 40px; background: #1e293b; padding: 10px 18px; border-radius: 6px; border: 1px solid #475569;">
+          <span style="font-family: 'JetBrains Mono'; font-size: 13px; color: #94a3b8;">192.168.56.20 (bastion)</span>
+        </div>
+        <div style="position: absolute; top: 140px; left: 240px; background: rgba(239, 68, 68, 0.2); border: 2px solid #ef4444; padding: 12px 20px; border-radius: 6px;">
+          <span style="font-family: 'JetBrains Mono'; font-size: 14px; font-weight: bold; color: #ef4444;">🚨 lab-win10-03 [ISOLATED]</span>
+        </div>
+        <div style="position: absolute; top: 250px; left: 440px; background: #1e293b; padding: 10px 18px; border-radius: 6px; border: 1px solid #475569;">
+          <span style="font-family: 'JetBrains Mono'; font-size: 13px; color: #94a3b8;">lab-dc-01 (Domain Controller)</span>
+        </div>
+        <!-- Connection lines -->
+        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+          <line x1="140" y1="50" x2="240" y2="150" stroke="#ef4444" stroke-width="3" stroke-dasharray="5,5" />
+          <line x1="380" y1="160" x2="440" y2="260" stroke="#f59e0b" stroke-width="2" />
+        </svg>
+        <div style="position: absolute; bottom: 15px; left: 20px; font-family: 'JetBrains Mono'; font-size: 12px; color: #64748b;">
+          STATUS: LIVE (muse-spark-1.3) | LAYA LATENCY: 45ms Mean | APPLIED CONTAINMENTS: 1
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="flex: 0.9;">
+      <div class="card-label">Telegram HITL Two-Way Authorization Card</div>
+      <div style="margin-top: 15px; background: #18222d; border-radius: 10px; padding: 20px; border: 1px solid #283747; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+        <div style="color: #45aaf2; font-weight: bold; margin-bottom: 8px;">🚨 SENTINEL V4 // HITL CONTAINMENT AUTHORIZATION</div>
+        <div style="color: #8b949e; border-bottom: 1px solid #283747; padding-bottom: 8px; margin-bottom: 10px;">
+          Proposal ID: prop-1fcec089<br/>
+          Action: isolate_host<br/>
+          Target: 192.168.56.31 (lab-win10-03)<br/>
+          Laya Conf: 47.58% | Muse Spark Reason: SMB lateral movement to DC
+        </div>
+        <div style="background: rgba(0, 229, 163, 0.15); border: 1px solid #00e5a3; color: #00e5a3; padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; margin-top: 15px;">
+          ✅ CONTAINMENT APPROVED BY ANALYST
+        </div>
+        <div style="margin-top: 10px; font-size: 11px; color: #8b949e; text-align: center;">
+          Token consumed & logged in hitl_audit with SHA-256 fingerprint.
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  <div class="footer">
+    <div>REPO: github.com/hearthacker003366/sentinel-v4</div>
+    <div>HARDWARE: NVIDIA RTX 4050 LAPTOP GPU + META MUSE SPARK 1.3</div>
+  </div>
+</body>
+</html>
