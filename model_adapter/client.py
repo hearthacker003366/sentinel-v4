@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
 
-from .sentinel_v4_mcp_tools import TOOLS, TOOL_REGISTRY_VERSION, in_lab_scope
+from .sentinel_v4_mcp_tools import TOOLS, TOOL_REGISTRY_VERSION, in_lab_scope, LAB_HOSTNAMES
 
 # ---------------------------------------------------------------------------
 # Pinned configuration (frozen — do not parameterize the tier).
@@ -161,6 +161,23 @@ def validate_containment_proposal(obj: Any) -> ContainmentProposal:
             is_executable=False,
             validation_error=f"Invalid containment action {raw_action!r}",
         )
+
+    if action_enum != ContainmentAction.NOOP:
+        host_part = target
+        if ":" in target:
+            parts = target.rsplit(":", 1)
+            if parts[1].isdigit():
+                host_part = parts[0]
+        host_valid = in_lab_scope(host_part) or (host_part.lower() in LAB_HOSTNAMES)
+        if not host_valid:
+            return ContainmentProposal(
+                proposal_id=pid,
+                action=ContainmentAction.NOOP,
+                target=target,
+                dry_run=True,
+                is_executable=False,
+                validation_error="target outside lab scope",
+            )
 
     return ContainmentProposal(
         proposal_id=pid,

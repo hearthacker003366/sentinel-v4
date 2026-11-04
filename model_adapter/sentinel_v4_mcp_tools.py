@@ -55,6 +55,18 @@ LAB_CIDRS = [
     ipaddress.ip_network("10.10.10.0/24"),
 ]
 
+LAB_HOSTNAMES = {
+    "bastion-ssh",
+    "egress-proxy",
+    "lab-db-01",
+    "lab-dc-01",
+    "lab-file-01",
+    "lab-kali-01",
+    "lab-sink-99",
+    "lab-win10-03",
+    "web-01",
+}
+
 # Every event the orchestrator emits carries one of these, e.g.
 # "st4-20261019-7f3a9c". Dashboard + replay harness join on it.
 TRACE_ID_RE = re.compile(r"^st4-\d{8}-[0-9a-f]{6}$")
