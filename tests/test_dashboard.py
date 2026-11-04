@@ -49,6 +49,7 @@ def test_dashboard_serves_stitch_index_html(dashboard_server):
 def test_dashboard_state_endpoint(dashboard_server):
     req = urllib.request.urlopen(f"{dashboard_server}/v4/state")
     assert req.status == 200
+    assert req.headers.get("Access-Control-Allow-Origin") is None
     data = json.loads(req.read().decode("utf-8"))
     assert "summary" in data
     assert "incidents_feed" in data
