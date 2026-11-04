@@ -316,6 +316,24 @@ class TestSafetyProposalAndApiUrl(unittest.TestCase):
             self.assertEqual(prop.action, ContainmentAction.ISOLATE_HOST)
             self.assertIsNone(prop.validation_error)
 
+    def test_no_containment_guard_suppresses_structured_proposal(self):
+        """Security (GLM F-03): 'No containment recommended' must produce NOOP even if a proposal dict is present."""
+        c = _client()
+        raw_response = json.dumps({
+            "explanation": "Routine backup script executing on schedule.",
+            "containment_recommendation": "No containment recommended.",
+            "remediation_draft": "none",
+            "confidence": 0.95,
+            "proposal": {
+                "action": "isolate_host",
+                "target": "lab-win10-03",
+                "reason": "rogue proposal that contradicts text"
+            }
+        })
+        res = c._parse_result(raw_response, [])
+        self.assertIsNotNone(res.containment_proposal)
+        self.assertEqual(res.containment_proposal.action, ContainmentAction.NOOP)
+
 
 if __name__ == "__main__":
     unittest.main()

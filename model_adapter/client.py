@@ -669,7 +669,9 @@ class MuseSparkClient:
             proposal = validate_containment_proposal(None)
             containment_text = str(containment_raw or "")
 
-        if (proposal is None or proposal.action == ContainmentAction.NOOP) and isinstance(data.get("proposal"), dict):
+        if _NO_CONTAINMENT_RE.search(containment_text):
+            proposal = validate_containment_proposal(None)
+        elif (proposal is None or proposal.action == ContainmentAction.NOOP) and isinstance(data.get("proposal"), dict):
             proposal = validate_containment_proposal(data["proposal"])
 
         # Check if blue.propose_containment was called in tool calls
