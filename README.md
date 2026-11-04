@@ -19,7 +19,7 @@ flowchart TD
     SPARK -->|"proposed actions"| ORCH
     ORCH -->|"approval request"| HUMAN["Human analyst\nvia Telegram HITL"]
     HUMAN -->|"approve / reject"| ORCH
-    ORCH -->|"live state"| DASH["dashboard/ — planned\nDay 8, Stitch-built UI"]
+    ORCH -->|"live state"| DASH["dashboard/ — Cytoscape SOC Command\nWeb UI on port 8516"]
 ```
 
 How an event flows:
@@ -29,20 +29,21 @@ How an event flows:
 3. Confidence above 0.85 → **fast path**: the orchestrator proposes dry-run reversible containment.
 4. Confidence below 0.85 → **slow path**: Muse Spark reasons about the threat path and recommends containment.
 5. Every proposed action goes to the human analyst via Telegram HITL for approval or rejection.
-6. The dashboard shows live state (planned — Day 8).
+6. The dashboard displays live real-time state: Cytoscape network graph topology, incident feeds, and pending/applied containment cards.
 
 Muse Spark is reached ONLY through `model_adapter/` — prompts stay model-agnostic, and the MCP tool interface from Sentinel V3 stays unchanged.
 
 ## 🗂️ Project structure
 
 ```
-triage/          Laya System-1 gate
-model_adapter/   Muse Spark System-2 client
+triage/          Laya System-1 gate (local RTX 4050 edge model)
+model_adapter/   Muse Spark System-2 client (Meta Model API + 12 MCP tools)
 orchestrator/    Chief Sentinel — dry-run containment + Telegram HITL
+dashboard/       Cytoscape SOC Command Dashboard (zero external CDN dependencies)
 redteam/         LLM red-team bots (simulated lab only)
 scripts/         replay harness (Gate 1)
-tests/           62 tests
-docs/            Laya training proof screenshots (assets/)
+tests/           69 tests (100% pass)
+docs/            Laya training proof screenshots (assets/) & video screenplay
 requirements.txt pinned dependencies
 ```
 
@@ -61,7 +62,15 @@ requirements.txt pinned dependencies
   - Scenario 1 (SSH brute force + lateral movement): PASS, conf 0.87 — dry-run reversible containment with TTL + approval request + threat-path evidence.
   - Scenario 2 (C2 beaconing + exfiltration): PASS, conf 0.82 — targeted isolation with TTL, zero blanket actions.
   - Scenario 3 (benign discriminator): PASS, conf 0.91 — zero containment proposals, zero approval requests, explicit benign classification.
-- **Tests: 62/62 pass** (`python -m pytest tests/`), including the three hardening tests that were missing before: tag breakout, multi-line SSE folding, inf/NaN confidence escalation.
+  - §1.8 Target Scope Validation: proposals strictly validated against `LAB_HOSTNAMES` and `LAB_CIDRS`; non-lab entities rejected as NOOP.
+  - §1.9 Unmapped Fallback Containment Safety: unmapped offline events map to `scenario_0_unmapped.json` with zero containment proposals.
+  - §1.10 Explicit No-Containment Precedence: model recommendation text indicating "no containment" strictly overrides and invalidates any conflicting proposal dictionaries or tool calls.
+  - §1.11 Atomic Single-Use Token Consumption: status-guarded SQL updates (`WHERE proposal_id = ? AND status = 'pending'`) eliminate race conditions.
+  - §1.12 Same-Origin Security Boundary: wildcard CORS header removed from dashboard server to enforce local isolation.
+  - §1.13 Streaming SSE Tool-Call Accumulator: multi-chunk delta argument fragment reconstruction by index before schema validation.
+- **`orchestrator/telegram_gateway.py`** — Full two-way Telegram HITL gateway: background polling daemon, inline interactive authorization cards (`[✅ Approve] [❌ Reject]`), single-use token consumption, and in-place message outcome editing.
+- **`dashboard/server.py` & `dashboard/index.html`** — Air-gapped, zero-CDN Cytoscape.js network topology visualizer with real-time incident telemetry feed and one-click attack scenario trigger buttons.
+- **Tests: 69/69 pass** (`python -m pytest tests/`), 100% green across unit, integration, and security test suites.
 
 ## 🤖 Laya (System-1 gate)
 
@@ -83,8 +92,17 @@ See full metrics and confusion breakdown in [EVAL.md](EVAL.md).
 ## 🧪 Run it
 
 ```bash
-python -m pytest tests/          # 62 passed
+# 1. Run all 69 unit and integration tests
+python -m pytest tests/ -q           # 69 passed
+
+# 2. Replay all 3 calibrated attack scenarios
 python scripts/replay_scenarios.py   # 3/3 scenarios passed
+
+# 3. Launch live SOC Web Command Dashboard
+python dashboard/server.py --port 8516
+
+# 4. Or launch interactive Chief Sentinel Console REPL
+python -m orchestrator.chief_sentinel --interactive
 ```
 
 ## 📋 Submission
