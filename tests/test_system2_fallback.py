@@ -47,3 +47,23 @@ def test_system2_fallback_banner_and_signature_keying(monkeypatch, capsys):
     assert res3.is_recorded_response is True
     assert res3.containment_proposal is None
     assert "No containment recommended" in res3.containment_recommendation
+
+
+def test_system2_unmapped_fallback_has_no_containment(monkeypatch):
+    monkeypatch.delenv("META_MODEL_API_KEY", raising=False)
+    monkeypatch.delenv("MUSE_API_KEY", raising=False)
+
+    adapter = MuseSparkAdapter(api_key=None)
+    assert adapter.is_live is False
+
+    # Completely unmapped event (does not match SMB, beacon, benign, etc.)
+    ctx_unmapped = ThreatContext(
+        event_summary="completely unmapped random telemetry event foo bar baz",
+        graph_path=[],
+        telemetry={"random_field": "unknown_value"}
+    )
+    res = adapter.reason(ctx_unmapped, signature_tag="unknown-custom-tag")
+    assert res.is_recorded_response is True
+    assert res.containment_proposal is None
+    assert "No containment" in res.containment_recommendation
+

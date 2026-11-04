@@ -1,0 +1,9 @@
+{
+  "scenario_id": "scenario_0_unmapped",
+  "signature_tags": [],
+  "explanation": "Event telemetry does not correlate with known calibrated benchmark scenarios. In recorded fallback mode, unmapped events are escalated without automated containment recommendations.",
+  "containment_recommendation": "No containment recommended. (Unmapped event in recorded fallback mode; manual operator escalation required.)",
+  "remediation_draft": "Review raw telemetry logs manually to determine root cause.",
+  "confidence": 0.50,
+  "proposal": null
+}

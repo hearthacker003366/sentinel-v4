@@ -114,8 +114,8 @@ class MuseSparkAdapter:
         elif any(k in text_corpus for k in ("benign", "vpn", "mfa", "patch", "scenario_3", "scanner")):
             fixture_name = "scenario_3_muse_response.json"
         else:
-            # Default to Scenario 1 if completely unmapped
-            fixture_name = "scenario_1_muse_response.json"
+            # Default to unmapped fallback fixture (escalate-only, NO containment)
+            fixture_name = "scenario_0_unmapped.json"
 
         fixture_path = os.path.join(FIXTURES_DIR, fixture_name)
         with open(fixture_path, "r", encoding="utf-8") as f:
