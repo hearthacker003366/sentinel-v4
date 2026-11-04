@@ -1,49 +1,48 @@
 # Sentinel V4 — AI SOC Copilot (Meta Global AI Developer Hackathon)
 
-> **What was pre-existing vs what was built this week:** Sentinel V3 (the college SOC project — NetworkX threat graphing, GraphSAGE lateral-movement prediction, MCP reasoning, Telegram HITL SOAR) is the pre-existing baseline and lives in a separate repository. **Everything in this repo was built during the hackathon (Oct 26 – Nov 4, 2026):** the dual-system AI SOC copilot below — Laya System-1 triage gate + Muse Spark System-2 reasoning, LLM red-team bots, the orchestrator, and the replay harness.
+> **What was pre-existing vs what was built this week:** Sentinel V3 (the college SOC project — NetworkX threat graphing, GraphSAGE lateral-movement prediction, MCP reasoning, Telegram HITL SOAR) is the pre-existing baseline and lives in a separate repository. **Everything in this repo was built during the hackathon (Oct 26 – Nov 4, 2026):** the dual-system AI SOC copilot below — Laya System-1 triage gate + Muse Spark System-2 reasoning, scripted red-team bots, the orchestrator, and the replay harness.
 
-Purple-team demo: LLM red-team bots attack a **simulated lab network** while an AI SOC copilot (Laya triage + Muse Spark reasoning) defends it, live on a dashboard, with a human approving every action.
+Purple-team demo: scripted red-team bots attack a **simulated lab network** while an AI SOC copilot (Laya triage + Muse Spark reasoning) defends it, live on a dashboard, with a human approving every action.
 
 ## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
     subgraph LAB["Simulated lab network — RFC1918 only"]
-        BOTS["redteam/ bots\nMuse Spark strategy, Laya tactics\nlab scope hard-coded"]
+        BOTS["redteam/ bots\nscripted personas\nlab scope hard-coded"]
         NET["Lab hosts\n192.168.56.0/24, 10.10.10.0/24"]
         BOTS -->|"attack (probes)"| NET
     end
     NET -->|"telemetry"| GATE["triage/ — Laya, System-1 gate\nscores every event locally"]
-    GATE -->|"confidence > 0.85"| ORCH["orchestrator/ — Chief Sentinel\ndry-run containment by default"]
+    GATE -->|"confidence ≥ 0.85"| ORCH["orchestrator/ — Chief Sentinel\ndry-run containment by default"]
     GATE -->|"confidence below 0.85\nuncertain / high-risk"| SPARK["model_adapter/ — Muse Spark, System-2\nthreat-path explanation, containment\nrecommendation, remediation drafting"]
     SPARK -->|"proposed actions"| ORCH
     ORCH -->|"approval request"| HUMAN["Human analyst\nvia Telegram HITL"]
     HUMAN -->|"approve / reject"| ORCH
-    ORCH -->|"live state"| DASH["dashboard/ — Cytoscape SOC Command\nWeb UI on port 8516"]
+    ORCH -->|"live state"| DASH["dashboard/ — read-only live state\n127.0.0.1 only, poll-based"]
 ```
 
 How an event flows:
 
 1. Red-team bots attack the simulated lab (RFC1918 addresses only; scope is hard-coded).
 2. Lab telemetry reaches the Laya gate, which scores every event.
-3. Confidence above 0.85 → **fast path**: the orchestrator proposes dry-run reversible containment.
+3. Confidence ≥ 0.85 → **fast path**: the orchestrator proposes dry-run reversible containment.
 4. Confidence below 0.85 → **slow path**: Muse Spark reasons about the threat path and recommends containment.
 5. Every proposed action goes to the human analyst via Telegram HITL for approval or rejection.
-6. The dashboard displays live real-time state: Cytoscape network graph topology, incident feeds, and pending/applied containment cards.
+6. The dashboard shows live state — proposals (token fingerprints only), the derived threat path, containment status — read-only.
 
 Muse Spark is reached ONLY through `model_adapter/` — prompts stay model-agnostic, and the MCP tool interface from Sentinel V3 stays unchanged.
 
 ## 🗂️ Project structure
 
 ```
-triage/          Laya System-1 gate (local RTX 4050 edge model)
-model_adapter/   Muse Spark System-2 client (Meta Model API + 12 MCP tools)
+triage/          Laya System-1 gate
+model_adapter/   Muse Spark System-2 client
 orchestrator/    Chief Sentinel — dry-run containment + Telegram HITL
-dashboard/       Cytoscape SOC Command Dashboard (zero external CDN dependencies)
-redteam/         LLM red-team bots (simulated lab only)
+redteam/         scripted red-team bots (simulated lab only)
 scripts/         replay harness (Gate 1)
-tests/           69 tests (100% pass)
-docs/            Laya training proof screenshots (assets/) & video screenplay
+tests/           69 tests
+docs/            Laya training proof screenshots (assets/)
 requirements.txt pinned dependencies
 ```
 
@@ -57,20 +56,12 @@ requirements.txt pinned dependencies
   - §1.4 lab scope accepts literal lab IPs only (hostnames denied — no DNS rebinding).
   - §1.5 pinned `requirements.txt`.
   - §1.6 non-finite confidence (`inf`/`NaN`) forces escalation (`math.isfinite`).
-  - §1.7 SSE multi-line event folding, tool-schema validation, bounded retries with backoff, `raw_decode` JSON parsing.
+  - §1.7 SSE (API response stream) multi-line event folding, tool-schema validation, bounded retries with backoff, `raw_decode` JSON parsing.
 - **`scripts/replay_scenarios.py`** — Gate 1 replay harness, 3/3 scenarios PASS (verified):
   - Scenario 1 (SSH brute force + lateral movement): PASS, conf 0.87 — dry-run reversible containment with TTL + approval request + threat-path evidence.
   - Scenario 2 (C2 beaconing + exfiltration): PASS, conf 0.82 — targeted isolation with TTL, zero blanket actions.
   - Scenario 3 (benign discriminator): PASS, conf 0.91 — zero containment proposals, zero approval requests, explicit benign classification.
-  - §1.8 Target Scope Validation: proposals strictly validated against `LAB_HOSTNAMES` and `LAB_CIDRS`; non-lab entities rejected as NOOP.
-  - §1.9 Unmapped Fallback Containment Safety: unmapped offline events map to `scenario_0_unmapped.json` with zero containment proposals.
-  - §1.10 Explicit No-Containment Precedence: model recommendation text indicating "no containment" strictly overrides and invalidates any conflicting proposal dictionaries or tool calls.
-  - §1.11 Atomic Single-Use Token Consumption: status-guarded SQL updates (`WHERE proposal_id = ? AND status = 'pending'`) eliminate race conditions.
-  - §1.12 Same-Origin Security Boundary: wildcard CORS header removed from dashboard server to enforce local isolation.
-  - §1.13 Streaming SSE Tool-Call Accumulator: multi-chunk delta argument fragment reconstruction by index before schema validation.
-- **`orchestrator/telegram_gateway.py`** — Full two-way Telegram HITL gateway: background polling daemon, inline interactive authorization cards (`[✅ Approve] [❌ Reject]`), single-use token consumption, and in-place message outcome editing.
-- **`dashboard/server.py` & `dashboard/index.html`** — Air-gapped, zero-CDN Cytoscape.js network topology visualizer with real-time incident telemetry feed and one-click attack scenario trigger buttons.
-- **Tests: 69/69 pass** (`python -m pytest tests/`), 100% green across unit, integration, and security test suites.
+- **Tests: 69/69 pass** (`python -m pytest tests/`) on a machine with the Laya checkpoint in `training/laya-tuned-v1`; without it, one model-routing test fails — it requires the real checkpoint. The suite includes the three hardening tests: tag breakout, multi-line SSE folding, inf/NaN confidence escalation.
 
 ## 🤖 Laya (System-1 gate)
 
@@ -92,29 +83,30 @@ See full metrics and confusion breakdown in [EVAL.md](EVAL.md).
 ## 🧪 Run it
 
 ```bash
-# 1. Run all 69 unit and integration tests
-python -m pytest tests/ -q           # 69 passed
-
-# 2. Replay all 3 calibrated attack scenarios
+python -m pytest tests/          # 69 passed (with the Laya checkpoint present)
 python scripts/replay_scenarios.py   # 3/3 scenarios passed
-
-# 3. Launch live SOC Web Command Dashboard
-python dashboard/server.py --port 8516
-
-# 4. Or launch interactive Chief Sentinel Console REPL
-python -m orchestrator.chief_sentinel --interactive
 ```
 
-## 📋 Submission
+## ▶️ Run the live system
 
-- **Portal:** https://cerebralvalley.ai/e/meta-ai-developer-hackathon/hackathon/submit
-- **Deadline:** November 4, 2026, 9:00 PM ET (November 5, 7:30 AM IST).
-- **Demo video (3 minutes, required):** opens with the pre-existing-vs-built-this-week line above.
-- **Track:** Build for Your World. **Tooling:** Muse Spark series via the Meta Model API; open-weight bonus path via Muse Glimmer / Muse Spark Open on local hardware.
+1. Copy `.env.example` to `.env` and fill in your keys (never commit `.env`). Both entry points below load `.env` automatically. **Judges: supply your own Meta Model API key as `META_MODEL_API_KEY`.**
+2. Run everything from the repo root, so the gate finds the checkpoint in `training/laya-tuned-v1`:
+   - Dashboard: `python dashboard/server.py` → http://127.0.0.1:8516 (read-only)
+   - Orchestrator: `python -m orchestrator.chief_sentinel --interactive`
+3. With `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_USER_IDS` set in `.env`, containment proposals arrive as Telegram cards with Approve/Reject buttons. Without them, approvals work from the console only — the engine logs this loudly at startup.
+4. If no Meta key is present, the system drops to a clearly labelled recorded mode (**LIVE MODEL UNAVAILABLE** banner) — never a silent fake.
+
+## 🎨 Assets & credits
+
+- **Laya** — open-source triage model by [NandhaKishorM](https://github.com/NandhaKishorM/laya) (Apache 2.0); the `training/laya-tuned-v1` checkpoint was fine-tuned for this project on an RTX 4050.
+- **Dashboard vendored libraries** (`dashboard/vendor/`): Cytoscape.js (MIT), Tailwind CSS (MIT), Google Fonts / Material Symbols (Apache 2.0).
+- **Telegram Bot API** — approval cards and outcome edits.
+- **Training-proof screenshots** in `docs/assets/` — the author's own.
+- **Demo video** — presenter bookends generated with Google Flow (Veo) using the author's character likeness and character voice; screen capture via OBS; no music.
 
 ## ⚠️ Rules note
 
-New work only: this repo was created Oct 26, 2026 and contains only hackathon-week work. Pre-existing work (Sentinel V3) is named here and in the video, lives in its own repository, and is not judged. The demo runs standalone with mock/demo data available for judges.
+New work only: this repo was created Oct 26, 2026 and contains only hackathon-week work. Pre-existing work (Sentinel V3) is named here and in the video, lives in its own repository, and is not judged. The system runs live against the Meta Model API; if no key is present it drops to a clearly-labelled recorded mode (LIVE MODEL UNAVAILABLE banner), never a silent fake.
 
 ## License
 
