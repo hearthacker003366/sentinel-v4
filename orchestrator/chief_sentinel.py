@@ -28,6 +28,23 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+
+def _load_dotenv() -> None:
+    env_path = os.path.join(PROJECT_ROOT, ".env")
+    if os.path.isfile(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k, v = k.strip(), v.strip()
+                        if k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+
 from model_adapter.client import ThreatContext, ContainmentAction
 from model_adapter.muse_spark_adapter import MuseSparkAdapter, EnhancedReasoningResult
 from orchestrator.hitl_manager import (
@@ -371,6 +388,7 @@ def run_interactive_repl(engine: ChiefSentinelEngine) -> None:
 
 
 def main() -> None:
+    _load_dotenv()
     parser = argparse.ArgumentParser(description="Chief Sentinel V4 Orchestrator")
     parser.add_argument("--interactive", action="store_true", help="Launch interactive console REPL")
     parser.add_argument("--db", type=str, default=None, help="Path to SQLite database")

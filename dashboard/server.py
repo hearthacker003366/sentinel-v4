@@ -21,7 +21,25 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, PROJECT_ROOT)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+
+def _load_dotenv() -> None:
+    env_path = os.path.join(PROJECT_ROOT, ".env")
+    if os.path.isfile(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k, v = k.strip(), v.strip()
+                        if k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
 
 from orchestrator.chief_sentinel import ChiefSentinelEngine
 from orchestrator.hitl_manager import GateLockedOut, TokenAlreadyConsumed, TokenExpired
@@ -236,6 +254,7 @@ def run_dashboard_server(host: str = "127.0.0.1", port: int = 8516) -> Threading
 
 
 def main():
+    _load_dotenv()
     parser = argparse.ArgumentParser(description="Sentinel V4 Dashboard Server")
     parser.add_argument("--host", default="127.0.0.1", help="Host address")
     parser.add_argument("--port", type=int, default=8516, help="Port (default: 8516)")

@@ -269,10 +269,15 @@ def parse_sse_events(raw: str) -> list[str]:
 
 
 def _extract_response(payloads: list[str], raw_text: str) -> tuple[str, list[dict[str, Any]]]:
-    """Fold SSE data payloads (or a plain JSON body) into text + tool calls."""
+    """Fold SSE data payloads (or a plain JSON body) into text + tool calls.
+
+    Properly accumulates streaming tool-call chunks across deltas by index (§1.7),
+    joining chunked argument fragments before validating schemas.
+    """
     texts: list[str] = []
-    tool_calls: list[dict[str, Any]] = []
+    tool_calls_map: dict[int, dict[str, Any]] = {}
     candidates = payloads if payloads else ([raw_text.strip()] if raw_text.strip() else [])
+
     for p in candidates:
         try:
             obj = json.loads(p)
@@ -294,22 +299,58 @@ def _extract_response(payloads: list[str], raw_text: str) -> tuple[str, list[dic
                             texts.append(content)
                         for tc in msg.get("tool_calls", []) or []:
                             if isinstance(tc, dict):
+                                idx = tc.get("index", len(tool_calls_map))
+                                if idx not in tool_calls_map:
+                                    tool_calls_map[idx] = {
+                                        "index": idx,
+                                        "id": tc.get("id", ""),
+                                        "type": tc.get("type", "function"),
+                                        "function": {
+                                            "name": "",
+                                            "arguments_chunks": [],
+                                        },
+                                    }
+                                entry = tool_calls_map[idx]
+                                if tc.get("id"):
+                                    entry["id"] = tc["id"]
+                                if tc.get("type"):
+                                    entry["type"] = tc["type"]
                                 fn = tc.get("function", {})
-                                name = fn.get("name", "") if isinstance(fn, dict) else ""
-                                if name and is_valid_tool_name(name):
-                                    raw_args = fn.get("arguments", "{}")
-                                    try:
-                                        parsed_args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
-                                    except (json.JSONDecodeError, ValueError):
-                                        parsed_args = {}
-                                    valid, err = validate_tool_arguments(name, parsed_args)
-                                    tc_clean = dict(tc)
-                                    tc_clean["arguments_validated"] = valid
-                                    if not valid:
-                                        tc_clean["validation_error"] = err
-                                    tool_calls.append(tc_clean)
+                                if isinstance(fn, dict):
+                                    if fn.get("name"):
+                                        entry["function"]["name"] = fn["name"]
+                                    if fn.get("arguments"):
+                                        entry["function"]["arguments_chunks"].append(fn["arguments"])
+
         if not texts and obj.get("error"):
             texts.append(json.dumps(obj["error"]))
+
+    # Finalize accumulated tool calls and validate complete arguments
+    tool_calls: list[dict[str, Any]] = []
+    for idx in sorted(tool_calls_map.keys()):
+        item = tool_calls_map[idx]
+        name = item["function"]["name"]
+        raw_args_str = "".join(item["function"]["arguments_chunks"])
+        if name and is_valid_tool_name(name):
+            try:
+                parsed_args = json.loads(raw_args_str) if raw_args_str.strip() else {}
+            except (json.JSONDecodeError, ValueError):
+                parsed_args = {}
+            valid, err = validate_tool_arguments(name, parsed_args)
+            tc_final = {
+                "index": idx,
+                "id": item["id"] or f"call_{idx}",
+                "type": item["type"],
+                "function": {
+                    "name": name,
+                    "arguments": raw_args_str if raw_args_str.strip() else "{}",
+                },
+                "arguments_validated": valid,
+            }
+            if not valid:
+                tc_final["validation_error"] = err
+            tool_calls.append(tc_final)
+
     return "".join(texts), tool_calls
 
 
@@ -613,6 +654,26 @@ class MuseSparkClient:
 
         if (proposal is None or proposal.action == ContainmentAction.NOOP) and isinstance(data.get("proposal"), dict):
             proposal = validate_containment_proposal(data["proposal"])
+
+        # Check if blue.propose_containment was called in tool calls
+        if (proposal is None or proposal.action == ContainmentAction.NOOP) and not _NO_CONTAINMENT_RE.search(containment_text):
+            for tc in reversed(tool_calls):
+                fn = tc.get("function", {})
+                if fn.get("name") == "blue.propose_containment":
+                    raw_args = fn.get("arguments", "{}")
+                    try:
+                        args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
+                    except Exception:
+                        args = {}
+                    if isinstance(args, dict) and args.get("action") and args.get("target"):
+                        proposal = validate_containment_proposal(args)
+                        break
+
+        # Check if action and target were explicitly stated in recommendation text
+        if (proposal is None or proposal.action == ContainmentAction.NOOP) and not _NO_CONTAINMENT_RE.search(containment_text):
+            m = re.search(r"action[=:\s]+([a-zA-Z0-9_-]+).*?target[=:\s]+([a-zA-Z0-9_.-]+)", containment_text)
+            if m:
+                proposal = validate_containment_proposal({"action": m.group(1), "target": m.group(2)})
 
         containment = _enforce_containment_safety(containment_text)
         remediation = str(data.get("remediation_draft", "") or "").strip()

@@ -75,7 +75,12 @@ class MuseSparkAdapter:
         """Executes reasoning: attempts live Meta API first, falls back to signature keying."""
         if self._live_available and self._client:
             try:
-                res = self._client.explain_threat_path(ctx)
+                task_fn = (
+                    self._client.explain_threat_path
+                    if (signature_tag and "benign" in signature_tag.lower())
+                    else self._client.recommend_containment
+                )
+                res = task_fn(ctx)
                 fallback_banner = res.raw.get("fallback_banner")
                 return EnhancedReasoningResult(
                     explanation=res.explanation,
