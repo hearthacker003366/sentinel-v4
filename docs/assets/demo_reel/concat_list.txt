@@ -1,6 +1,0 @@
-file 'C:/Users/B.prabhudas/Desktop/sentinel-v4/docs/assets/scene1_opening.mp4'
-file 'C:/Users/B.prabhudas/Desktop/sentinel-v4/docs/assets/scene2_laya_edge.mp4'
-file 'C:/Users/B.prabhudas/Desktop/sentinel-v4/docs/assets/scene3_muse_spark.mp4'
-file 'C:/Users/B.prabhudas/Desktop/sentinel-v4/docs/assets/scene4_soc_telegram.mp4'
-file 'C:/Users/B.prabhudas/Desktop/sentinel-v4/docs/assets/scene5_honeypot.mp4'
-file 'C:/Users/B.prabhudas/Desktop/sentinel-v4/docs/assets/scene6_summary.mp4'
